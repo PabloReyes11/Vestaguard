@@ -3,8 +3,8 @@
 # Fecha: 08/05/26
 # =================================================================
 # Objetivo:
-# Recibir la telemetría enviada por la ESP32 con marcas de tiempo y
-# publicar comandos MQTT desde la laptop hacia los actuadores del sistema.
+# Recibir la telemetría completa desde la ESP32 y publicar comandos
+# MQTT hacia los motores, el LED RGB y el relevador de VestaGuard.
 # =================================================================
 # Integrantes de equipo:
 # - Alvarez Guevara Estefania Guadalupe (ID: 23240077)
@@ -12,27 +12,85 @@
 # - Reyes Gutierrez Pablo Alberto (ID: 23240055)
 # =================================================================
 
-import paho.mqtt.client as mqtt
 import json
 from datetime import datetime
 
-BROKER = "127.0.0.1" 
+import paho.mqtt.client as mqtt
+
+BROKER = "127.0.0.1"
 PORT = 1883
 
+
 def on_connect(client, userdata, flags, rc):
-    # Callback de conexión: al abrir sesión con el broker se activa la suscripción.
     print("Conectado a Mosquitto exitosamente.")
-    client.subscribe("vestaguard/telemetria/sensores")
+    client.subscribe("vestaguard/telemetria/#")
+
 
 def on_message(client, userdata, msg):
-    # Callback de mensaje: interpreta el JSON, agrega timestamp y muestra la telemetría.
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     try:
         datos = json.loads(msg.payload.decode())
-        print(f"[{timestamp}] PIR: {datos['pir']} | Dist: {datos['distancia_cm']}cm | MPU: {datos['aceleracion_y']}")
     except Exception:
-        # Si el payload no es JSON válido, se ignora sin detener la consola.
-        pass
+        datos = msg.payload.decode(errors="ignore")
+
+    if msg.topic.endswith("/gps") and isinstance(datos, dict):
+        latitud = datos.get("gps_latitud")
+        longitud = datos.get("gps_longitud")
+        altitud = datos.get("gps_altitud_m")
+        satelites = datos.get("gps_satelites")
+        fijado = datos.get("gps_fijado")
+        print(f"[{timestamp}] GPS | Lat: {latitud} | Lon: {longitud}")
+        print(f"Alt: {altitud}m | Sat: {satelites} | Fix: {fijado}")
+        return
+
+    if isinstance(datos, dict):
+        pir = datos.get("pir")
+        distancia = datos.get("distancia_cm")
+        aceleracion = datos.get("aceleracion_y")
+        panico = datos.get("boton_panico")
+        gps_lat = datos.get("gps_latitud")
+        gps_lon = datos.get("gps_longitud")
+        print(f"[{timestamp}] PIR: {pir} | Dist: {distancia}cm")
+        print(
+            f"MPU: {aceleracion} | Panico: {panico} | GPS: {gps_lat}, {gps_lon}"
+        )
+    else:
+        print(f"[{timestamp}] {msg.topic}: {datos}")
+
+
+def publicar_comando(client, comando):
+    comando = comando.strip().upper()
+
+    if comando == "MOTOR_ON":
+        client.publish("vestaguard/control/motores", "ON")
+    elif comando == "MOTOR_OFF":
+        client.publish("vestaguard/control/motores", "OFF")
+    elif comando == "RGB_ROJO":
+        client.publish("vestaguard/control/rgb", "ROJO")
+    # elif comando == "RGB_VERDE": # EXCLUIDO: LED verde no se usa por hardware; se redirige a Azul en el firmware
+    #     client.publish("vestaguard/control/rgb", "VERDE")
+    elif comando == "RGB_AZUL":
+        client.publish("vestaguard/control/rgb", "AZUL")
+    elif comando == "RGB_OFF":
+        client.publish("vestaguard/control/rgb", "APAGAR")
+    elif comando == "RELE_ON":
+        client.publish("vestaguard/control/relevador", "ON")
+    elif comando == "RELE_OFF":
+        client.publish("vestaguard/control/relevador", "OFF")
+    elif comando == "TODO_ON":
+        client.publish("vestaguard/control/motores", "ON")
+        client.publish("vestaguard/control/rgb", "ROJO")
+        client.publish("vestaguard/control/relevador", "ON")
+    elif comando == "TODO_OFF":
+        client.publish("vestaguard/control/motores", "OFF")
+        client.publish("vestaguard/control/rgb", "APAGAR")
+        client.publish("vestaguard/control/relevador", "OFF")
+    else:
+        print("Comando no reconocido.")
+        return
+
+    print(f"--> RED: Comando {comando} enviado a Mosquitto.")
+
 
 client = mqtt.Client()
 client.on_connect = on_connect
@@ -42,28 +100,14 @@ client.connect(BROKER, PORT, 60)
 client.loop_start()
 
 try:
-    # Consola de control: lo que el usuario escribe se publica por MQTT hacia la ESP32.
-    print("ESCRIBE UN COMANDO (VIB_ON, VIB_OFF, LED_ROJO, LED_VERDE, LED_OFF) Y PRESIONA ENTER:")
+    print("Comandos disponibles:")
+    print("MOTOR_ON, MOTOR_OFF, RGB_ROJO, RGB_AZUL (RGB_VERDE EXCLUIDO)")
+    print("RGB_OFF, RELE_ON, RELE_OFF, TODO_ON, TODO_OFF")
     while True:
-        # El prompt vacío evita mezclar el texto del usuario con la telemetría entrante.
-        comando = input("").strip().upper()
-        
-        if comando == 'VIB_ON':
-            client.publish("vestaguard/control/vibrador", "ON")
-            print(f"--> RED: Comando {comando} enviado a Mosquitto.")
-        elif comando == 'VIB_OFF':
-            client.publish("vestaguard/control/vibrador", "OFF")
-            print(f"--> RED: Comando {comando} enviado a Mosquitto.")
-        elif comando == 'LED_ROJO':
-            client.publish("vestaguard/control/rgb", "ROJO")
-            print(f"--> RED: Comando {comando} enviado a Mosquitto.")
-        elif comando == 'LED_VERDE':
-            client.publish("vestaguard/control/rgb", "VERDE")
-            print(f"--> RED: Comando {comando} enviado a Mosquitto.")
-        elif comando == 'LED_OFF':
-            client.publish("vestaguard/control/rgb", "APAGAR")
-            print(f"--> RED: Comando {comando} enviado a Mosquitto.")
-            
+        comando = input("").strip()
+        if comando:
+            publicar_comando(client, comando)
+
 except KeyboardInterrupt:
     client.loop_stop()
     client.disconnect()
