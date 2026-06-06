@@ -34,24 +34,7 @@ Con esto, la práctica queda alineada con el proyecto sin mezclar el control fí
 
 La ESP32-CAM no funciona como simple visualizador. Su rol es funcional y necesario porque aporta el frame que alimenta la decision del servidor. Eso permite justificar la actividad frente a la rúbrica.
 
-## 3. Estructura del entregable
-
-En esta carpeta se dejan los elementos necesarios para entregar el avance en clase y para subirlo al repositorio del proyecto:
-
-- [INDICE_ENTREGA_IA.md](INDICE_ENTREGA_IA.md): mapa rapido de que archivo va en el ESP32, en la ESP32-CAM y en la laptop.
-
-- [servidor_ia.py](servidor_ia.py): backend con MQTT, OpenCV y lógica de decisión.
-- [esp32cam_publicador.py](esp32cam_publicador.py): firmware de la ESP32-CAM para capturar y publicar la imagen.
-- [validacion_estatica.py](validacion_estatica.py): prueba previa con imagenes locales antes de usar MQTT.
-- [entrenar_modelo_demo.py](entrenar_modelo_demo.py): script para generar un modelo de prueba con dataset local.
-- [reporte_avance_ia.md](reporte_avance_ia.md): texto base para redactar el reporte de la actividad.
-- [guia_entrega_clase_ia.md](guia_entrega_clase_ia.md): paso a paso para montar y demostrar la práctica.
-- [requirements.txt](requirements.txt): dependencias del backend.
-- [modelo/README.md](modelo/README.md): ubicación del modelo entrenado.
-- [ENTREGABLE_HAL_VESTAGUARD/](ENTREGABLE_HAL_VESTAGUARD): HAL del chaleco para cargar en el ESP32 principal.
-- [ENTREGABLE-PRACTICA-MQTT/](ENTREGABLE-PRACTICA-MQTT): práctica MQTT completa; `main.py` va en el ESP32 y `servidor.py` va en la laptop o PC.
-
-## 4. Requisitos tecnicos cubiertos
+## 3. Requisitos tecnicos cubiertos
 
 Este avance cubre los puntos que pide la actividad:
 
@@ -114,17 +97,7 @@ La salida muestra:
 - `numpy` para procesamiento matricial.
 - `scikit-learn` y `joblib` si se desea entrenar y cargar un modelo local.
 
-## 9. Reglas para entregar en clase
-
-- Cada script debe conservar el encabezado con objetivo, integrantes y proyecto.
-- El reporte debe explicar que hace la IA, que precisión aproximada tiene y qué activa.
-- El repositorio debe incluir el modelo o el script que lo carga.
-- Debe mostrarse la prueba estática antes de la demo MQTT.
-- Debe demostrarse la salida del servidor hacia un actuador del proyecto.
-
-## 10. Relacion con el chaleco
-
-Si se quiere explicar de forma clara en clase, conviene decirlo así:
+## 9. Relacion con el chaleco
 
 - La HAL sigue controlando sensores y actuadores locales del chaleco.
 - La ESP32-CAM añade una capa de evidencia visual.
@@ -132,20 +105,3 @@ Si se quiere explicar de forma clara en clase, conviene decirlo así:
 - MQTT conecta todo sin mover la lógica de hardware al servidor.
 
 Conviene aclarar en clase que esta carpeta resuelve la parte de IA y visión del entregable E3; el almacenamiento histórico en Firebase y el dashboard se abordan después, según la secuencia de la unidad 4.
-
-## 12. Alcance fisico recomendado
-
-Para que el entregable sea coherente con la práctica, no se debe presentar la ESP32-CAM como si fuera parte del cableado principal del chaleco.
-
-La recomendación de integración es:
-
-1. Chaleco: ESP32 + HC-SR04 + PIR + MPU6050 + motores + LED + relevador.
-2. Nodo de visión: ESP32-CAM independiente alimentada y programada aparte.
-3. Servidor: laptop o PC con Python, OpenCV y MQTT.
-4. Broker: Mosquitto en la misma red local.
-
-Así se demuestra que la actividad de IA es un avance del proyecto, no un sustituto del sistema principal.
-
-## 11. Siguiente lectura recomendada
-
-Si vas a presentar este avance, revisa primero [guia_entrega_clase_ia.md](guia_entrega_clase_ia.md) porque ahí está el paso a paso de instalación, prueba y demostración.
