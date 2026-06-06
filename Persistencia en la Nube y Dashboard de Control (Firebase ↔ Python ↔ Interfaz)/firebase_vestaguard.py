@@ -22,9 +22,7 @@
     from datetime import datetime, timezone
     from typing import Any, Dict, Optional
 
-    # ──────────────────────────────────────────────
     # Importaciones opcionales — no fallan si faltan
-    # ──────────────────────────────────────────────
     try:
         import firebase_admin
         from firebase_admin import credentials, db as firebase_db
@@ -40,11 +38,8 @@
         mqtt = None
         _MQTT_OK = False
 
-
-    # ──────────────────────────────────────────────────────────────
     # Configuracion de temas MQTT (deben coincidir con el resto del
     # proyecto VestaGuard)
-    # ──────────────────────────────────────────────────────────────
     TEMA_TELEMETRIA   = "vestaguard/telemetria/sensores"
     TEMA_GPS          = "vestaguard/telemetria/gps"
     TEMA_ALERTA_IA    = "vestaguard/ia/resultado"
@@ -64,10 +59,7 @@
         os.path.join(os.path.dirname(__file__), "serviceAccountKey.json"),
     )
 
-    # ────────────────────────────────────────────
     # Utilidades de tiempo
-    # ────────────────────────────────────────────
-
     def _timestamp_iso() -> str:
         """Devuelve timestamp ISO 8601 en UTC."""
         return datetime.now(timezone.utc).isoformat()
@@ -77,11 +69,7 @@
         """Devuelve timestamp legible en hora local."""
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-
-    # ────────────────────────────────────────────
     # Capa Firebase
-    # ────────────────────────────────────────────
-
     class ClienteFirebase:
         """
         Parametros:
@@ -202,11 +190,7 @@
             for tipo, n in self._conteo.items():
                 print(f"  {tipo:<15}: {n} eventos")
 
-
-    # ────────────────────────────────────────────
     # Logica de clasificacion de mensajes MQTT
-    # ────────────────────────────────────────────
-
     def _procesar_telemetria(payload: Dict[str, Any], firebase: ClienteFirebase) -> None:
         """Guarda un evento de telemetria en Firebase (sin imagenes ni rostros)."""
         # Se filtra cualquier campo que pueda contener datos visuales sensibles
@@ -265,11 +249,7 @@
             "timestamp": _timestamp_iso(),
         })
 
-
-    # ────────────────────────────────────────────
     # Cliente MQTT
-    # ────────────────────────────────────────────
-
     def crear_cliente_mqtt(firebase: ClienteFirebase, host: str, puerto: int):
         """
         Parametros:
@@ -325,23 +305,23 @@
 
             print(f"[MQTT] Recibido en [{topico}]")
 
-            # ── Telemetria de sensores ──────────────────────────
+            # Telemetria de sensores
             if topico in (TEMA_TELEMETRIA, TEMA_GPS) and isinstance(payload, dict):
                 _procesar_telemetria(payload, firebase)
 
-            # ── Resultado de IA ────────────────────────────────
+            # Resultado de IA
             elif topico == TEMA_ALERTA_IA and isinstance(payload, dict):
                 _procesar_alerta_ia(payload, firebase)
 
-            # ── Comandos de actuadores (practica MQTT) ─────────
+            # Comandos de actuadores (practica MQTT)
             elif topico.startswith("vestaguard/control/"):
                 _procesar_estado_actuador(topico, payload, firebase)
 
-            # ── Estado de camara (sin imagen) ──────────────────
+            # Estado de camara (sin imagen)
             elif topico == TEMA_CAM_ESTADO and isinstance(payload, dict):
                 _procesar_estado_camara(payload, firebase)
 
-            # ── Control desde dashboard → broker → ESP32 ───────
+            # Control desde dashboard → broker → ESP32
             elif topico.startswith("vestaguard/firebase/control/"):
                 actuador = topico.split("/")[-1]
                 # Re-publica como comando MQTT nativo hacia el chaleco
@@ -365,11 +345,7 @@
 
         return cliente
 
-
-    # ────────────────────────────────────────────
     # Modo demo — genera datos simulados
-    # ────────────────────────────────────────────
-
     def _ejecutar_modo_demo(firebase: ClienteFirebase) -> None:
         """Genera eventos simulados cada 5 segundos para demostrar el flujo."""
         import random
@@ -427,9 +403,7 @@
             print("\n[DEMO] Detenido por usuario.")
 
 
-    # ────────────────────────────────────────────
     # Punto de entrada principal
-    # ────────────────────────────────────────────
 
     def main() -> None:
         parser = argparse.ArgumentParser(
