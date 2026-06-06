@@ -157,7 +157,7 @@ Genera datos simulados de VestaGuard cada 5 segundos y los guarda en Firebase
    - **Database URL**: `https://vestaguard-XXXXXXX-default-rtdb.firebaseio.com`
    - **Project ID**: `vestaguard`
 4. Clic en **Conectar a Firebase**
-5. El badge cambiará a 🟢 **ONLINE** cuando haya datos en tiempo real
+5. El badge cambiará a  **ONLINE** cuando haya datos en tiempo real
 
 ---
 
@@ -188,26 +188,6 @@ print("Motor:", firebase.estado_motor)  # "ON" o "OFF"
 ```
 
 ---
-
-## Advertencias de seguridad (del slide de la maestra)
-
-> ⚠️ Nunca subas tu API Key a repositorios públicos (GitHub).
-> El modo de prueba expira en 30 días.
-> Para producción: configura Firebase Auth y reglas específicas por usuario.
-> No se almacenan rostros ni imágenes identificables en Firebase (privacidad garantizada).
-
----
-
-## Checklist E4 (entrega 21 mayo)
-
-- [ ] Firebase configurado con autenticación anónima
-- [ ] `firebase_logger.py` corriendo y guardando en Firebase
-- [ ] ≥ 3 tipos de eventos con timestamp: `sensores`, `alertas_ia`, `actuadores`
-- [ ] Dashboard muestra: estado online/offline, sensores, últimas 5 alertas
-- [ ] Control remoto de al menos 1 actuador desde el dashboard (vibrador)
-- [ ] Sin imágenes identificables en Firebase
-- [ ] Código con encabezado completo (integrantes, objetivo, proyecto)
-- [ ] Todo en español
 
 ---
 
