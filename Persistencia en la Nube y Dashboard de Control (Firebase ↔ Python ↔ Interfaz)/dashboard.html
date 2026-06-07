@@ -400,7 +400,7 @@ body {
 <header class="header">
   <div class="header-inner">
     <div class="header-left">
-      <div class="logo">🦺</div>
+      <div class="logo">VG</div>
       <div class="header-copy">
         <div class="header-title">VestaGuard</div>
         <div class="header-sub">Dashboard Firebase para monitoreo y control remoto</div>
@@ -452,19 +452,19 @@ body {
         <div class="cfg-body" id="cfg-body">
           <div class="cfg-field">
             <label>API Key</label>
-            <input id="c-apiKey" type="text" placeholder="AIzaSy..."/>
+            <input id="c-apiKey" type="text" value="AIzaSyD3rAg3WZkbuF-MGrpuB3x5i67ayYEQtsg"/>
           </div>
           <div class="cfg-field">
             <label>Database URL</label>
-            <input id="c-dbURL" type="text" placeholder="https://vestaguard-default-rtdb.firebaseio.com"/>
+            <input id="c-dbURL" type="text" value="https://chaleco-vestaguard-default-rtdb.firebaseio.com"/>
           </div>
           <div class="cfg-field">
             <label>Auth Domain</label>
-            <input id="c-authDomain" type="text" placeholder="vestaguard.firebaseapp.com"/>
+            <input id="c-authDomain" type="text" value="chaleco-vestaguard.firebaseapp.com"/>
           </div>
           <div class="cfg-field">
             <label>Project ID</label>
-            <input id="c-projectId" type="text" placeholder="vestaguard"/>
+            <input id="c-projectId" type="text" value="chaleco-vestaguard"/>
           </div>
           <button class="btn-primary" onclick="conectarFirebase()">Conectar Firebase</button>
           <p class="cfg-note">
@@ -516,44 +516,37 @@ body {
       <div class="card-body">
         <div class="sensor-grid">
           <div class="sensor-card" id="c-dist">
-            <div class="sensor-icon">📏</div>
             <div class="sensor-name">Distancia</div>
             <div class="sensor-val" id="v-dist">—</div>
             <div class="sensor-unit">cm · HC-SR04</div>
           </div>
           <div class="sensor-card" id="c-pir">
-            <div class="sensor-icon">👁️</div>
             <div class="sensor-name">PIR</div>
             <div class="sensor-val" id="v-pir">—</div>
             <div class="sensor-unit">Movimiento pasivo</div>
           </div>
           <div class="sensor-card" id="c-acel">
-            <div class="sensor-icon">📐</div>
             <div class="sensor-name">Aceleración Y</div>
             <div class="sensor-val" id="v-acel">—</div>
             <div class="sensor-unit">g · MPU6050</div>
           </div>
           <div class="sensor-card" id="c-caida">
-            <div class="sensor-icon">⚠️</div>
             <div class="sensor-name">Caída</div>
             <div class="sensor-val" id="v-caida">—</div>
             <div class="sensor-unit">MPU6050</div>
           </div>
           <div class="sensor-card" id="c-panico">
-            <div class="sensor-icon">🆘</div>
             <div class="sensor-name">Pánico</div>
             <div class="sensor-val" id="v-panico">—</div>
             <div class="sensor-unit">GPIO 32</div>
           </div>
           <div class="sensor-card" id="c-bat">
-            <div class="sensor-icon">🔋</div>
             <div class="sensor-name">Batería</div>
             <div class="sensor-val" id="v-bat">—</div>
             <div class="sensor-unit">%</div>
           </div>
         </div>
         <div class="gps-card" style="margin-top:12px" id="c-gps">
-          <span class="gps-icon">📍</span>
           <div>
             <div class="gps-coords" id="v-gps">Sin fix GPS</div>
             <div class="gps-label">NEO-6M · vestaguard/sensores</div>
@@ -648,6 +641,14 @@ body {
               <div class="ctrl-desc">Disparo manual de captura</div>
             </div>
             <button class="btn-cam" onclick="enviarCaptura()">Capturar</button>
+          </div>
+          <div class="ctrl-item" style="display:flex; flex-direction:column; align-items:center;">
+            <div style="width:100%; text-align:left; margin-bottom:10px;">
+              <div class="ctrl-name">Visor de Cámara</div>
+              <div class="ctrl-desc">Última captura recibida</div>
+            </div>
+            <img id="visor-camara" src="" alt="Sin captura" style="width:100%; max-width:320px; border-radius:8px; border:1px solid #333; background:#1a1a1a; min-height:240px; object-fit:cover;">
+            <div id="cam-timestamp" style="font-size:0.8rem; color:#aaa; margin-top:5px;">--:--:--</div>
           </div>
         </div>
       </div>
@@ -803,7 +804,7 @@ function enviarActuador(act, encendido) {
   _send(act, val);
 }
 function enviarRGB(color) { _send('rgb', color); }
-function enviarCaptura()  { _send('camara_disparo', 'CAPTURAR'); }
+function enviarCaptura()  { _send('camara_disparo', 'CAPTURAR_' + Date.now()); }
 
 function _send(act, val) {
   if (app.db && !app.demo) {
@@ -828,7 +829,7 @@ function conectarFirebase() {
     app.demo = false;
     suscribir();
     setEstado(true, false);
-    document.getElementById('cfg-btn').innerHTML = '✅ Firebase conectado <span class="arrow">▼</span>';
+    document.getElementById('cfg-btn').innerHTML = ' Firebase conectado <span class="arrow">▼</span>';
   } catch(e) {
     alert('Error Firebase: ' + e.message);
   }
@@ -847,6 +848,16 @@ function suscribir() {
     const d = s.val() || {};
     if (d.motores   !== undefined) document.getElementById('tog-motor').checked = d.motores   === 'ON';
     if (d.relevador !== undefined) document.getElementById('tog-rele').checked  = d.relevador === 'ON';
+  });
+  db.ref('vestaguard/sistema/ultima_foto').on('value', s => {
+    const val = s.val();
+    if (val && val.imagen_b64) {
+      document.getElementById('visor-camara').src = "data:image/jpeg;base64," + val.imagen_b64;
+      if (val.timestamp) {
+        const d = new Date(val.timestamp);
+        document.getElementById('cam-timestamp').innerText = d.toLocaleTimeString();
+      }
+    }
   });
 }
 

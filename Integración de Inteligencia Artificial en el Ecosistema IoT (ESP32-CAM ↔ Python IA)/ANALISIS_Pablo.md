@@ -15,7 +15,7 @@
 
 ## Soluciones aplicadas
 
-1. Se organizo la alimentacion con tierra comun y con separacion entre logica y potencia para evitar caidas de voltaje.
+1. Se organizó la alimentación usando una PowerBank de doble puerto USB. Un puerto alimenta al ESP32 principal y su etapa de potencia de motores, mientras que el otro puerto alimenta de forma aislada a la ESP32-CAM. Todo se unificó con una tierra común sólida para evitar caídas de voltaje.
 2. Los motores vibradores se dejaron con etapa de conmutacion por transistor, resistencia de base y diodo de proteccion, en lugar de conectarlos directo al ESP32.
 3. El boton de panico se documento con filtro anti-rebote y pull-up externo para evitar lecturas falsas.
 4. Se propuso un montaje mixto: soldar la parte critica de potencia y fijar modulos como ESP32, TP4056, GPS y ESP32-CAM con tornillos, separadores o conectores donde conviene mantenimiento.

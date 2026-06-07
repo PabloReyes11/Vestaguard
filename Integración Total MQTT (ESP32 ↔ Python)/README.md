@@ -64,4 +64,6 @@ Las evidencias de funcionamiento del sistema (capturas de pantalla de telemetrí
 - Los tres archivos tienen el bloque docstring con OBJETIVO, INTEGRANTES y PROYECTO en la cabecera.
 - El repositorio está configurado como público para evitar error 404 durante la revisión.
 
-
+## Conclusiones Globales de Despliegue Físico (Hardware Final)
+- **Topología USB Dual (PowerBank):** Para simplificar el hardware y garantizar 5V estables sin caídas de tensión por el arranque de los motores, implementamos una PowerBank de doble salida. El Puerto 1 alimenta al ESP32 principal y al riel de potencia de los motores, mientras que el Puerto 2 alimenta de forma aislada a la ESP32-CAM, manteniendo una tierra común (GND).
+- **Asincronía Total:** El código dispositivos.py controla todo el ecosistema de hardware físico sin latencias gracias a uasyncio.

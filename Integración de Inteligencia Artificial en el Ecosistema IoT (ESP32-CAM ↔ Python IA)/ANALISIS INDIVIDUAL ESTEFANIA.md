@@ -15,7 +15,7 @@ Procesamiento de las imágenes: Trabajar con Python y OpenCV tiene su nivel de c
 Conectar dos mundos distintos: Lo que más me costó trabajo fue el "pipeline" o puente de comunicación. Tenía que hacer que mi programa de Inteligencia Artificial en la computadora platicara en tiempo real con la tarjeta del chaleco (FSM). Si la IA detectaba algo, tenía que avisarle al chaleco rapidísimo para que reaccionara, y coordinar esos tiempos sin que el sistema se trabara fue muy complicado.
 
 Soluciones que aplicamos
-Para la cámara: En el código esp32cam_publicador.py ajusté la configuración para comprimir un poco las imágenes y bajar ligeramente la resolución. Con esto logramos que la transmisión fuera mucho más rápida y estable, sin sobrecalentar la tarjetita.
+Para la cámara: Logramos evadir las restricciones físicas de la placa (pines DTR/RTS) que impedían subir el código normal. Implementamos MicroPython nativo en la ESP32-CAM, y para programarla desarrollamos un script en Python que inyecta el código en pequeños bloques (chunks) directamente por consola. Además, en el código esp32cam_publicador.py ajusté la configuración para comprimir las imágenes, logrando una transmisión rápida y estable sin sobrecalentar la tarjeta.
 
 Para el servidor Python/OpenCV: Depuré el código para que solo procesara lo estrictamente necesario. Optimicé los algoritmos de visión artificial para que la computadora no se saturara y pudiera analizar las imágenes en tiempo real.
 

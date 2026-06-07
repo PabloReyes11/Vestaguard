@@ -31,8 +31,8 @@ except ImportError:
     sys.exit(1)
 
 
-TEMA_CAMILLA = b"vestaguard/camara/frame"
-TEMA_TELEMETRIA = b"vestaguard/telemetria/sensores"
+TEMA_CAMILLA = "vestaguard/camara/frame"
+TEMA_TELEMETRIA = "vestaguard/telemetria/sensores"
 TEMA_RESULTADO = "vestaguard/ia/resultado"
 TEMA_COMANDO = "vestaguard/ia/comando"
 
@@ -173,7 +173,11 @@ def publicar_decision(cliente, decision: DecisionIA, telemetria: Optional[Dict[s
 def crear_cliente_mqtt(motor: MotorDecisionIA):
     broker = os.getenv("MQTT_HOST", "127.0.0.1")
     puerto = int(os.getenv("MQTT_PORT", "1883"))
-    cliente = mqtt.Client(client_id="vestaguard_ia_server")
+    try:
+        cliente = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id="vestaguard_ia_server")
+    except AttributeError:
+        # Fallback for paho-mqtt < 2.0
+        cliente = mqtt.Client(client_id="vestaguard_ia_server")
 
     def on_connect(cliente_mqtt, _userdata, _flags, _rc):
         print(f"[MQTT] Conectado a {broker}:{puerto}")
@@ -184,7 +188,7 @@ def crear_cliente_mqtt(motor: MotorDecisionIA):
         payload = _decodificar_payload(mensaje.payload)
         
         # Procesar Frame de ESP32-CAM
-        if mensaje.topic == TEMA_CAMILLA.decode():
+        if mensaje.topic == TEMA_CAMILLA:
             imagen_b64 = payload.get("imagen_b64") or payload.get("frame") or payload.get("foto")
             if not imagen_b64:
                 return
@@ -199,7 +203,7 @@ def crear_cliente_mqtt(motor: MotorDecisionIA):
             return
 
         # Procesar Telemetria del ESP32 Principal
-        if mensaje.topic == TEMA_TELEMETRIA.decode():
+        if mensaje.topic == TEMA_TELEMETRIA:
             decision_telemetria = motor.evaluar_telemetria(payload)
             # Solo actualizamos el estado si detecta un cambio brusco, la fusion principal ocurre con la foto
             if decision_telemetria.clasificacion == "emergencia":

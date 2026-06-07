@@ -11,7 +11,7 @@ Precision aproximada: 0.80 a 0.92 segun el dataset usado.
 Tipo de prediccion: amenaza, vigilancia o normal a partir de un frame JPEG enviado por la ESP32-CAM.
 """
 
-from __future__ import annotations
+
 
 import gc
 import json
@@ -57,7 +57,7 @@ except Exception:  # pragma: no cover - si no existe secrets.py se usan valores 
     secrets = None
 
 
-TEMA_DISPARO = b"vestaguard/camara/disparar"
+TEMA_DISPARO = b"vestaguard/control/camara_disparo"
 TEMA_FRAME = b"vestaguard/camara/frame"
 TEMA_ESTADO = b"vestaguard/camara/estado"
 
@@ -80,8 +80,8 @@ def _obtener_credenciales_wifi():
 
 
 def _obtener_credenciales_mqtt():
-    host = _obtener_parametro("MQTT_HOST", "127.0.0.1")
-    puerto = int(_obtener_parametro("MQTT_PORT", 1883))
+    host = _obtener_parametro("MQTT_HOST", _obtener_parametro("HOST_MQTT", "127.0.0.1"))
+    puerto = int(_obtener_parametro("MQTT_PORT", _obtener_parametro("PUERTO_MQTT", 1883)))
     return host, puerto
 
 
@@ -98,7 +98,12 @@ def conectar_wifi():
     ssid, contrasena = _obtener_credenciales_wifi()
     interfaz = network.WLAN(network.STA_IF)
     interfaz.active(True)
+    try:
+        interfaz.config(dhcp_hostname="esp32cam")
+    except Exception:
+        pass
     if not interfaz.isconnected():
+        print("Conectando a WiFi...")
         interfaz.connect(ssid, contrasena)
 
     inicio = time.ticks_ms() if time is not None else 0
@@ -107,6 +112,7 @@ def conectar_wifi():
             raise RuntimeError("No fue posible conectar la ESP32-CAM a WiFi")
         if time is not None:
             time.sleep_ms(250)
+    print("WiFi Conectado! IP:", interfaz.ifconfig()[0])
     return interfaz
 
 
@@ -146,8 +152,25 @@ def inicializar_camara():
 
 
 def capturar_jpeg():
+    if machine is not None and time is not None:
+        try:
+            flash = machine.Pin(4, machine.Pin.OUT)
+            flash.value(1)
+            time.sleep(1)
+        except Exception:
+            flash = None
+    else:
+        flash = None
+
     gc.collect()
     imagen = camera.capture()
+
+    if flash is not None:
+        try:
+            flash.value(0)
+        except Exception:
+            pass
+
     if isinstance(imagen, tuple):
         imagen = imagen[0]
     if not isinstance(imagen, (bytes, bytearray)):
@@ -185,21 +208,29 @@ def main():
     if MQTTClient is None:
         raise RuntimeError("MQTTClient no esta disponible en este entorno")
 
+    print("Iniciando ESP32-CAM VestaGuard...")
     conectar_wifi()
+    
+    print("Inicializando camara...")
     inicializar_camara()
 
     host, puerto = _obtener_credenciales_mqtt()
+    print("Conectando a MQTT en", host)
     cliente = MQTTClient(_id_cliente(), host, puerto)
 
     def _callback(topico, mensaje):
         topico_dec = topico.decode() if isinstance(topico, (bytes, bytearray)) else str(topico)
         mensaje_dec = mensaje.decode() if isinstance(mensaje, (bytes, bytearray)) else str(mensaje)
+        print("MQTT Recibido:", topico_dec, "->", mensaje_dec)
         if topico_dec == TEMA_DISPARO.decode() and mensaje_dec.strip().upper() in {"1", "ON", "CAPTURAR", "FOTO"}:
+            print("¡Tomando foto!")
             publicar_frame(cliente, evento="solicitud_remota")
 
     cliente.set_callback(_callback)
     cliente.connect()
     cliente.subscribe(TEMA_DISPARO)
+    print("Suscrito a TEMA_DISPARO:", TEMA_DISPARO.decode())
+    print("ESP32-CAM Lista y esperando ordenes...")
 
     ultimo_heartbeat = time.ticks_ms() if time is not None else 0
 
