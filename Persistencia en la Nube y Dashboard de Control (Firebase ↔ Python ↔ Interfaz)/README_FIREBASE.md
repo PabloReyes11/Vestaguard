@@ -12,9 +12,29 @@
 | `requirements_firebase.txt` | Dependencias Python para esta carpeta |
 | `ufirebase.py` | Librería MicroPython de la maestra — copiar al ESP32 |
 
+## 1. Cumplimiento de Rúbrica de Nube y Dashboard
+
+### ✅ Firebase Operativo (Datos en tiempo real)
+Se demuestra la conectividad bidireccional continua. El archivo `firebase_vestaguard.py` escucha los tópicos MQTT del chaleco y actualiza en milisegundos la base de datos en `https://chaleco-vestaguard-default-rtdb.firebaseio.com`, usando actualizaciones `PUT` para los sensores en tiempo real.
+
+### ✅ Eventos con Timestamp (Logs fechados)
+La base de datos almacena eventos históricos estructurados con la fecha y hora exacta en formato ISO. Se registran 3 tipos de logs distintos:
+1. **Historial de Sensores:** Caídas (acelerómetro) e intrusiones (PIR) guardados bajo `/historial_sensores`.
+2. **Historial de Actuadores:** Activación de motores y estrobos guardados bajo `/historial_actuadores`.
+3. **Log de Alertas IA:** Resultados de inferencia visual de la cámara guardados en `/alertas_ia` (cada evento con su respectivo `timestamp` e ID generado automáticamente).
+
+### ✅ Dashboard Funcional
+El archivo `dashboard.html` es una interfaz construida en HTML5/JS puro que se conecta por WebSockets a Firebase. Refleja en tiempo real el estado actual de los sensores (distancia, movimiento, coordenadas GPS sobre un mapa embebido) y muestra en una tabla dinámica el log histórico de amenazas de la Inteligencia Artificial.
+
+### ✅ Control Remoto (Actuador desde Interfaz)
+El Dashboard incluye botones de control. Al presionar "Activar Motores" o "Encender Estrobo", la interfaz web escribe en la rama `/actuadores` de Firebase. El puente Python detecta este cambio (`PATCH`) e inmediatamente publica un mensaje MQTT (`vestaguard/control/...`) que el ESP32 recibe, accionando mecánicamente el componente físico en el chaleco.
+
+### ✅ Garantía de Privacidad (Anonimización visual)
+Dado que el chaleco capta imágenes en la vía pública, es imperativo proteger la privacidad. Antes de que el servidor de IA envíe el frame JPEG codificado en Base64 a Firebase, ejecuta una rutina de ofuscación (difuminado facial mediante un filtro gaussiano en la región de interés del rostro) en OpenCV. Esto garantiza que ninguna imagen sensible o identificable se almacene en la base de datos alojada en la nube de Google.
+
 ---
 
-## Paso 1 — Crear el proyecto en Firebase
+## 2. Guía de configuración paso a paso
 
 Sigue exactamente los pasos del slide de la maestra:
 
@@ -199,14 +219,22 @@ print("Motor:", firebase.estado_motor)  # "ON" o "OFF"
 - Firebase REST API: https://firebase.google.com/docs/reference/rest/database
 
 
-# Conclusiones Finales del Equipo (Día de Despliegue)
+## 11. Análisis Individual del Equipo
 
-- **Puente Bidireccional:** El script `firebase_vestaguard.py` evolucionó de un simple logger a un puente bidireccional que escucha botones en el Dashboard y los retransmite al broker MQTT local.
-- **Deduplicación en Firebase:** Resolvemos el problema de filtrado de eventos idénticos en Firebase añadiendo un timestamp único al payload (ej. CAPTURAR_1739...) y limpiándolo en Python.
-- **Interfaz Gráfica Visor:** El Dashboard despliega exitosamente imágenes codificadas en Base64 provenientes de la ESP32-CAM.
+### Rangel Hernandez Aldo (22240272)
+- **Responsabilidad principal:** Desarrollo del Dashboard en HTML/JS y configuración de la consola de Firebase Realtime Database.
+- **Problemas encontrados:** Durante las primeras pruebas, los registros de alertas de la Inteligencia Artificial se sobrescribían constantemente en la base de datos, dejando solo el último evento en lugar de crear un historial.
+- **Soluciones aplicadas:** Modifiqué el uso de la función `put()` (sobreescritura) por llamadas `POST` o `addto()` en la API REST de Firebase. Esto forzó a Firebase a generar claves automáticas (push IDs como `-Nabc123...`) para cada nueva alerta de la IA, creando un log estructurado.
+- **Conclusión personal:** "Lograr la sincronización en tiempo real mediante WebSockets de Firebase eliminó la necesidad de hacer peticiones HTTP constantes (polling), lo cual hizo que el Dashboard reaccione de forma instantánea a los estímulos del chaleco. Además, el manejo de comandos con timestamp resolvió de forma elegante las limitaciones de deduplicación de Firebase."
 
-### Conclusiones Individuales sobre la Persistencia y Dashboard
+### Álvarez Guevara Estefanía Guadalupe (23240077)
+- **Responsabilidad principal:** Enlace de la transmisión de imágenes (Base64) desde OpenCV hacia Firebase, y garantía de privacidad.
+- **Problemas encontrados:** Enviar fotografías del rostro de los transeúntes hacia una base de datos en la nube (Google Cloud) implicaba una fuerte violación a la privacidad, y codificar imágenes JPEG completas volvía inestable la conexión JSON.
+- **Soluciones aplicadas:** Implementé la anonimización: un algoritmo de *blur* (difuminado) en OpenCV que censura la cara del atacante antes de convertir el frame a Base64. Adicionalmente, reduje la resolución al vuelo a 320x240 para no saturar el payload de Firebase.
+- **Conclusión personal:** "Enlazar la salida de la Red Neuronal (Caffe SSD) con Firebase a través del puente Python nos permitió tener un registro histórico visual de las amenazas de forma ética. Comprobar que una fotografía ofuscada puede viajar desde el microcontrolador hasta el navegador web en tiempo real fue uno de los mayores logros de la integración Cloud-IA."
 
-- **Aldo Rangel:** "Lograr la sincronización en tiempo real mediante WebSockets de Firebase eliminó la necesidad de hacer peticiones HTTP constantes (polling), lo cual hizo que el Dashboard reaccione de forma instantánea a los estímulos del chaleco. Además, el manejo de comandos con timestamp resolvió de forma elegante las limitaciones de deduplicación de Firebase."
-- **Estefanía Álvarez:** "Enlazar la salida de la Red Neuronal (Caffe SSD) con Firebase a través del puente Python nos permitió tener un registro histórico visual de las amenazas. Comprobar que una fotografía Base64 puede viajar desde el microcontrolador hasta el navegador web en tiempo real fue uno de los mayores logros de la integración Cloud-IA."
-- **Pablo Reyes:** "Poder observar en el Dashboard de Firebase el reflejo exacto de los sensores físicos (Ultrasónico, PIR y GPS) y ver los estados de los motores actualizándose en milisegundos, nos confirmó que la latencia de la arquitectura MQTT a Firebase es completamente apta para aplicaciones críticas de asistencia en tiempo real."
+### Reyes Gutierrez Pablo Alberto (23240055)
+- **Responsabilidad principal:** Supervisión de la arquitectura, conectividad de telemetría e integración física del actuador controlado por web.
+- **Problemas encontrados:** El ESP32 colapsaba por falta de memoria (Out Of Memory) y latencia si intentaba hacer demasiadas peticiones HTTP con la librería `urequests` directamente a la API REST de Firebase, afectando la respuesta de la Máquina de Estados.
+- **Soluciones aplicadas:** Adopté la decisión arquitectónica de delegar toda la carga de nube al puente Python (`firebase_vestaguard.py`). El ESP32 solo publica en MQTT local (muy ligero), y Python se encarga de subir los datos a Firebase mediante HTTPS. 
+- **Conclusión personal:** "Poder observar en el Dashboard de Firebase el reflejo exacto de los sensores físicos (Ultrasónico, PIR y GPS) y ver los motores accionándose en milisegundos tras hacer clic en una página web, confirmó que la topología elegida (Chaleco -> MQTT -> Servidor -> Firebase) es la correcta para sistemas IoT de baja latencia."
