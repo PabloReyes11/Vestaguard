@@ -204,3 +204,9 @@ print("Motor:", firebase.estado_motor)  # "ON" o "OFF"
 - **Puente Bidireccional:** El script `firebase_vestaguard.py` evolucionó de un simple logger a un puente bidireccional que escucha botones en el Dashboard y los retransmite al broker MQTT local.
 - **Deduplicación en Firebase:** Resolvemos el problema de filtrado de eventos idénticos en Firebase añadiendo un timestamp único al payload (ej. CAPTURAR_1739...) y limpiándolo en Python.
 - **Interfaz Gráfica Visor:** El Dashboard despliega exitosamente imágenes codificadas en Base64 provenientes de la ESP32-CAM.
+
+### Conclusiones Individuales sobre la Persistencia y Dashboard
+
+- **Aldo Rangel:** "Lograr la sincronización en tiempo real mediante WebSockets de Firebase eliminó la necesidad de hacer peticiones HTTP constantes (polling), lo cual hizo que el Dashboard reaccione de forma instantánea a los estímulos del chaleco. Además, el manejo de comandos con timestamp resolvió de forma elegante las limitaciones de deduplicación de Firebase."
+- **Estefanía Álvarez:** "Enlazar la salida de la Red Neuronal (Caffe SSD) con Firebase a través del puente Python nos permitió tener un registro histórico visual de las amenazas. Comprobar que una fotografía Base64 puede viajar desde el microcontrolador hasta el navegador web en tiempo real fue uno de los mayores logros de la integración Cloud-IA."
+- **Pablo Reyes:** "Poder observar en el Dashboard de Firebase el reflejo exacto de los sensores físicos (Ultrasónico, PIR y GPS) y ver los estados de los motores actualizándose en milisegundos, nos confirmó que la latencia de la arquitectura MQTT a Firebase es completamente apta para aplicaciones críticas de asistencia en tiempo real."
