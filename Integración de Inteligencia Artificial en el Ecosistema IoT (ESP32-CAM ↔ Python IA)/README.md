@@ -7,10 +7,10 @@ La arquitectura de visión se resume en el siguiente flujo Extremo a Extremo:
 
 ## 1. Cumplimiento de Rúbrica de Inteligencia Artificial
 
-### ✅ Prueba Estática (Validación sin Red)
+###  Prueba Estática (Validación sin Red)
 Antes de enviar imágenes por MQTT, el modelo fue validado localmente procesando imágenes estáticas para garantizar su precisión. El script `validacion_estatica.py` carga imágenes de prueba y demuestra que la heurística de visión (Caffe SSD) identifica correctamente los rostros y emite comandos de predicción antes de depender de la conectividad de red.
 
-### ✅ Pipeline Extremo a Extremo (IA activa el mundo físico)
+###  Pipeline Extremo a Extremo (IA activa el mundo físico)
 El sistema demuestra un pipeline completo bidireccional:
 1. La ESP32-CAM captura un frame visual.
 2. El servidor Python lo procesa mediante la IA.
@@ -18,10 +18,10 @@ El sistema demuestra un pipeline completo bidireccional:
 4. El servidor publica el resultado en `vestaguard/ia/comando`.
 5. La Máquina de Estados (FSM) del ESP32 NodeMCU recibe el comando por MQTT y activa los actuadores físicos correspondientes (vibración fuerte y alerta visual en el LED RGB) basados en lo que la IA "vio".
 
-### ✅ IA Funcional (Datos esenciales)
+###  IA Funcional (Datos esenciales)
 La ESP32-CAM no funciona como un simple circuito cerrado de televisión. Su rol es funcional y crítico para el proyecto: aporta el frame que alimenta la toma de decisiones del chaleco. El chaleco detecta proximidad con el sensor ultrasónico, pero es la IA la que confirma si el obstáculo es una persona, eliminando los falsos positivos y habilitando la **Fusión de Sensores (Sensor Fusion)**.
 
-### ✅ Sustentación Técnica (Arquitectura del Modelo y Precisión)
+###  Sustentación Técnica (Arquitectura del Modelo y Precisión)
 - **Arquitectura del Modelo:** Se utiliza una Red Neuronal Profunda (DNN) de tipo *Single Shot MultiBox Detector (SSD)* basada en el framework Caffe (Caffe SSD).
 - **Procesamiento:** El análisis de los frames se realiza mediante el módulo `dnn` de OpenCV (`cv2.dnn.readNetFromCaffe`).
 - **Precisión:** El modelo pre-entrenado ofrece una precisión probada superior al **92%** en detección de rostros humanos, incluso en condiciones de variada iluminación y a diferentes escalas.

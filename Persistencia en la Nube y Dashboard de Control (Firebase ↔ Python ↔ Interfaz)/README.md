@@ -14,22 +14,22 @@
 
 ## 1. Cumplimiento de Rúbrica de Nube y Dashboard
 
-### ✅ Firebase Operativo (Datos en tiempo real)
+###  Firebase Operativo (Datos en tiempo real)
 Se demuestra la conectividad bidireccional continua. El archivo `firebase_vestaguard.py` escucha los tópicos MQTT del chaleco y actualiza en milisegundos la base de datos en `https://chaleco-vestaguard-default-rtdb.firebaseio.com`, usando actualizaciones `PUT` para los sensores en tiempo real.
 
-### ✅ Eventos con Timestamp (Logs fechados)
+###  Eventos con Timestamp (Logs fechados)
 La base de datos almacena eventos históricos estructurados con la fecha y hora exacta en formato ISO. Se registran 3 tipos de logs distintos:
 1. **Historial de Sensores:** Caídas (acelerómetro) e intrusiones (PIR) guardados bajo `/historial_sensores`.
 2. **Historial de Actuadores:** Activación de motores y estrobos guardados bajo `/historial_actuadores`.
 3. **Log de Alertas IA:** Resultados de inferencia visual de la cámara guardados en `/alertas_ia` (cada evento con su respectivo `timestamp` e ID generado automáticamente).
 
-### ✅ Dashboard Funcional
+###  Dashboard Funcional
 El archivo `dashboard.html` es una interfaz construida en HTML5/JS puro que se conecta por WebSockets a Firebase. Refleja en tiempo real el estado actual de los sensores (distancia, movimiento, coordenadas GPS sobre un mapa embebido) y muestra en una tabla dinámica el log histórico de amenazas de la Inteligencia Artificial.
 
-### ✅ Control Remoto (Actuador desde Interfaz)
+###  Control Remoto (Actuador desde Interfaz)
 El Dashboard incluye botones de control. Al presionar "Activar Motores" o "Encender Estrobo", la interfaz web escribe en la rama `/actuadores` de Firebase. El puente Python detecta este cambio (`PATCH`) e inmediatamente publica un mensaje MQTT (`vestaguard/control/...`) que el ESP32 recibe, accionando mecánicamente el componente físico en el chaleco.
 
-### ✅ Garantía de Privacidad (Anonimización visual)
+###  Garantía de Privacidad (Anonimización visual)
 Dado que el chaleco capta imágenes en la vía pública, es imperativo proteger la privacidad. Antes de que el servidor de IA envíe el frame JPEG codificado en Base64 a Firebase, ejecuta una rutina de ofuscación (difuminado facial mediante un filtro gaussiano en la región de interés del rostro) en OpenCV. Esto garantiza que ninguna imagen sensible o identificable se almacene en la base de datos alojada en la nube de Google.
 
 ---
@@ -61,7 +61,7 @@ Sigue exactamente los pasos del slide de la maestra:
 
 El slide de la maestra dice: *Configuración del proyecto → General → Clave de API web*
 
-1. En Firebase Console → ícono ️ → **Configuración del proyecto**
+1. En Firebase Console → ícono  → **Configuración del proyecto**
 2. Pestaña **General**
 3. El valor oficial de **Clave de API web** es (`AIzaSyD3rAg3WZkbuF-MGrpuB3x5i67ayYEQtsg`)
 
@@ -170,7 +170,7 @@ Genera datos simulados de VestaGuard cada 5 segundos y los guarda en Firebase
 ## Paso 8 — Conectar el dashboard a Firebase
 
 1. Abre `dashboard.html` en el navegador
-2. Expande el panel **️ Configuración de Firebase**
+2. Expande el panel ** Configuración de Firebase**
 3. Ingresa:
    - **API Key**: `AIzaSyD3rAg3WZkbuF-MGrpuB3x5i67ayYEQtsg` (del Paso 2)
    - **Auth Domain**: `chaleco-vestaguard.firebaseapp.com`

@@ -13,14 +13,14 @@ DESPLIEGUE/
 ├── ESP32_CHALECO/          ← Subir ESTOS 4 archivos a la raíz del ESP32 principal
 │   ├── main.py             ← Firmware completo (FSM + MQTT + HAL)
 │   ├── dispositivos.py     ← HAL de sensores y actuadores
-│   ├── secrets.py          ← ️ EDITAR antes de subir (WiFi + MQTT + Firebase)
+│   ├── secrets.py          ←  EDITAR antes de subir (WiFi + MQTT + Firebase)
 │   ├── boot.py             ← Inicialización segura
-│   └── lib/                ← ️ CARGAR ESTA CARPETA A LA RAÍZ (Subir a /)
+│   └── lib/                ←  CARGAR ESTA CARPETA A LA RAÍZ (Subir a /)
 │       └── umqtt/          ← Librería MQTT para MicroPython
 │
 ├── ESP32CAM/               ← Subir ESTOS 2 archivos a la raíz de la ESP32-CAM
 │   ├── main.py             ← Captura imagen y publica por MQTT
-│   └── secrets.py          ← ️ EDITAR antes de subir (mismos datos que el ESP32)
+│   └── secrets.py          ←  EDITAR antes de subir (mismos datos que el ESP32)
 │
 ├── LAPTOP_SERVIDOR/        ← Scripts que corren en la PC/Laptop con Python
 │   ├── servidor_ia.py      ← Terminal 1: Servidor de IA (recibe frames, decide)

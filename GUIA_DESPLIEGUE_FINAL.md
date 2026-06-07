@@ -54,7 +54,7 @@ python -m http.server 8080
 
 ## PASO 3: Encender el Hardware (Batería)
 
-️ **¡CRÍTICO ANTES DE ENCENDER!**
+ **¡CRÍTICO ANTES DE ENCENDER!**
 * Asegúrate de que el pin **GPIO0** de la ESP32-CAM **NO** esté conectado a GND (debe estar libre para que arranque el código y no se quede en modo programación).
 * Asegúrate de que tu batería pueda entregar al menos 1A a 5V para evitar reinicios por *Brownout* al prender el flash.
 
@@ -69,7 +69,7 @@ python -m http.server 8080
 
 1. **Desde tu Laptop:** Abre tu navegador y entra a `http://localhost:8080/dashboard.html`
 2. **Desde tu Celular:** Asegúrate de estar en la misma red Wi-Fi que la laptop y entra a la dirección oficial: **`http://10.254.179.79:8080/dashboard.html`**
-3. Dale clic al ícono de engrane (️) y verifica que estén los datos de conexión de tu Firebase.
+3. Dale clic al ícono de engrane () y verifica que estén los datos de conexión de tu Firebase.
 4. El indicador arriba a la derecha debe decir ** ONLINE**.
 5. **¡PRUEBA LA CÁMARA!** Presiona el botón "Capturar" en el celular. Deberías ver la foto aparecer en el visor en aproximadamente 1 a 2 segundos.
 
