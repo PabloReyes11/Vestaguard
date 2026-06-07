@@ -6,7 +6,7 @@ Este proyecto fue desarrollado para la materia de **Sistemas Programables** impa
 
 ---
 
-## 👥 Integrantes del Equipo
+##  Integrantes del Equipo
 
 | Nombre | Matrícula | Rol |
 |---|---|---|
@@ -16,7 +16,7 @@ Este proyecto fue desarrollado para la materia de **Sistemas Programables** impa
 
 ---
 
-## 🎯 Objetivo General
+##  Objetivo General
 
 Diseñar e implementar un sistema embebido basado en **ESP32** y programado en **MicroPython**, que sustituya la percepción visual mediante sensores. VestaGuard recopila información del entorno y la traduce en **estímulos hápticos direccionales en tiempo real** usando motores vibradores.
 
@@ -29,7 +29,7 @@ VestaGuard integra:
 
 ---
 
-## 📂 Estructura del Directorio
+##  Estructura del Directorio
 
 El repositorio está dividido lógicamente en tres carpetas principales que reflejan las capas arquitectónicas del proyecto, más recursos de pruebas y guías maestras:
 
@@ -62,7 +62,7 @@ Scripts de Python locales para diagnosticar individualmente subsistemas antes de
 
 ---
 
-## 🚀 Despliegue Rápido
+##  Despliegue Rápido
 
 Para ver las instrucciones detalladas de ejecución de cada componente, por favor consulte la **`GUIA_DESPLIEGUE_FINAL.md`** ubicada en la raíz de este repositorio. El orden de arranque general es:
 

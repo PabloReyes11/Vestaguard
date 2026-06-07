@@ -41,7 +41,7 @@ Sigue exactamente los pasos del slide de la maestra:
 
 El slide de la maestra dice: *Configuración del proyecto → General → Clave de API web*
 
-1. En Firebase Console → ícono ⚙️ → **Configuración del proyecto**
+1. En Firebase Console → ícono ️ → **Configuración del proyecto**
 2. Pestaña **General**
 3. El valor oficial de **Clave de API web** es (`AIzaSyD3rAg3WZkbuF-MGrpuB3x5i67ayYEQtsg`)
 
@@ -150,7 +150,7 @@ Genera datos simulados de VestaGuard cada 5 segundos y los guarda en Firebase
 ## Paso 8 — Conectar el dashboard a Firebase
 
 1. Abre `dashboard.html` en el navegador
-2. Expande el panel **⚙️ Configuración de Firebase**
+2. Expande el panel **️ Configuración de Firebase**
 3. Ingresa:
    - **API Key**: `AIzaSyD3rAg3WZkbuF-MGrpuB3x5i67ayYEQtsg` (del Paso 2)
    - **Auth Domain**: `chaleco-vestaguard.firebaseapp.com`

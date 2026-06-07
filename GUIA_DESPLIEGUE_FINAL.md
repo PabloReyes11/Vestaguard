@@ -54,14 +54,14 @@ python -m http.server 8080
 
 ## PASO 3: Encender el Hardware (Batería)
 
-⚠️ **¡CRÍTICO ANTES DE ENCENDER!**
+️ **¡CRÍTICO ANTES DE ENCENDER!**
 * Asegúrate de que el pin **GPIO0** de la ESP32-CAM **NO** esté conectado a GND (debe estar libre para que arranque el código y no se quede en modo programación).
 * Asegúrate de que tu batería pueda entregar al menos 1A a 5V para evitar reinicios por *Brownout* al prender el flash.
 
 1. **Enciende el Chaleco (ESP32 Principal):** Conecta la batería.
-   * ✅ Verás en la Terminal 1 (Mosquitto) que se conectó el ESP32.
+   *  Verás en la Terminal 1 (Mosquitto) que se conectó el ESP32.
 2. **Enciende la Cámara (ESP32-CAM):** Conecta la batería.
-   * ✅ Verás en la Terminal 1 (Mosquitto) que se conectó la cámara.
+   *  Verás en la Terminal 1 (Mosquitto) que se conectó la cámara.
 
 ---
 
@@ -69,11 +69,11 @@ python -m http.server 8080
 
 1. **Desde tu Laptop:** Abre tu navegador y entra a `http://localhost:8080/dashboard.html`
 2. **Desde tu Celular:** Asegúrate de estar en la misma red Wi-Fi que la laptop y entra a la dirección oficial: **`http://10.254.179.79:8080/dashboard.html`**
-3. Dale clic al ícono de engrane (⚙️) y verifica que estén los datos de conexión de tu Firebase.
-4. El indicador arriba a la derecha debe decir **🟢 ONLINE**.
+3. Dale clic al ícono de engrane (️) y verifica que estén los datos de conexión de tu Firebase.
+4. El indicador arriba a la derecha debe decir ** ONLINE**.
 5. **¡PRUEBA LA CÁMARA!** Presiona el botón "Capturar" en el celular. Deberías ver la foto aparecer en el visor en aproximadamente 1 a 2 segundos.
 
-**🎉 ¡SISTEMA LISTO PARA DEMOSTRACIÓN!** Ya puedes interactuar con los sensores y el dashboard.
+** ¡SISTEMA LISTO PARA DEMOSTRACIÓN!** Ya puedes interactuar con los sensores y el dashboard.
 
 ---
 
@@ -95,8 +95,8 @@ python -m http.server 8080
 
 | Estado FSM | Condición de activación | LED RGB | Motores Vibradores |
 |---|---|---|---|
-| **NORMAL** | Sin amenaza detectada | 🟢 Verde (o Azul) | Apagados |
-| **VIGILANCIA** | Solo PIR activo (sin distancia crítica) | 🔵 Azul (Cian) | Apagados |
-| **ALERTA** | Ultrasónico < 120cm + PIR detecta | 🟡 Violeta/Ambar | Hombros alternados |
-| **AMENAZA** | Ultrasónico < 80cm + PIR + IA detecta persona | 🔴 Rojo | Ambos hombros |
-| **EMERGENCIA** | Botón de pánico O caída detectada | 🔴 Rojo rápido | Ambos hombros + rápido |
+| **NORMAL** | Sin amenaza detectada |  Verde (o Azul) | Apagados |
+| **VIGILANCIA** | Solo PIR activo (sin distancia crítica) |  Azul (Cian) | Apagados |
+| **ALERTA** | Ultrasónico < 120cm + PIR detecta |  Violeta/Ambar | Hombros alternados |
+| **AMENAZA** | Ultrasónico < 80cm + PIR + IA detecta persona |  Rojo | Ambos hombros |
+| **EMERGENCIA** | Botón de pánico O caída detectada |  Rojo rápido | Ambos hombros + rápido |
