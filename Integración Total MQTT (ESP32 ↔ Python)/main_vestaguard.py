@@ -24,6 +24,7 @@ TEMA_CTRL_MOTORS = b'vestaguard/control/motores'
 TEMA_CTRL_RGB = b'vestaguard/control/rgb'
 TEMA_CTRL_RELE = b'vestaguard/control/relevador'
 TEMA_CTRL_SILENC = b'vestaguard/control/silencio'
+TEMA_DISPARO = b'vestaguard/control/camara_disparo'
 ESTADO_NORMAL = 0
 ESTADO_VIGILANCIA = 1
 ESTADO_ALERTA = 2
@@ -33,7 +34,8 @@ TIEMPO_CONFIRM_VIGILANCIA_MS = 3000
 TIEMPO_CONFIRM_ALERTA_MS = 5000
 INTERVALO_TELEMETRIA_MS = 500
 INTERVALO_MANTENIMIENTO_MS = 5000
-runtime = {'activo': True, 'estado_fsm': ESTADO_NORMAL, 'modo_silencioso': False, 'lectura_sensores': {}, 'inicio_presencia_ms': None, 'cliente_mqtt': None, 'wifi_ok': False, 'sos_enviado': False}
+INTERVALO_DISPARO_MS = 10000  # Enfriamiento para no saturar la camara
+runtime = {'activo': True, 'estado_fsm': ESTADO_NORMAL, 'modo_silencioso': False, 'lectura_sensores': {}, 'inicio_presencia_ms': None, 'cliente_mqtt': None, 'wifi_ok': False, 'sos_enviado': False, 'ultimo_disparo_ms': 0}
 
 def conectar_wifi():
     if not secrets:
@@ -145,6 +147,20 @@ def _aplicar_estado_fsm(dispositivos, nuevo_estado):
         dispositivos.controlar_led_rgb(True, False, False)
     runtime['estado_fsm'] = nuevo_estado
 
+def _disparar_camara_autonomo(ahora_ms):
+    cliente = runtime.get('cliente_mqtt')
+    if cliente is None:
+        return
+    
+    # Check cooldown
+    if (ahora_ms - runtime['ultimo_disparo_ms']) >= INTERVALO_DISPARO_MS:
+        try:
+            print('[IA] Solicitando captura autonoma de la camara...')
+            cliente.publish(TEMA_DISPARO, b'CAPTURAR')
+            runtime['ultimo_disparo_ms'] = ahora_ms
+        except Exception as e:
+            print('[IA] Error al solicitar captura autonoma:', e)
+
 def _evaluar_fsm(dispositivos, sensores, ahora_ms):
     estado_actual = runtime['estado_fsm']
     dist_cm = sensores.get('distancia_cm', 999.0)
@@ -156,18 +172,21 @@ def _evaluar_fsm(dispositivos, sensores, ahora_ms):
             print('[FSM] → EMERGENCIA (panico/caida)')
             _aplicar_estado_fsm(dispositivos, ESTADO_EMERGENCIA)
             runtime['sos_enviado'] = False
+        _disparar_camara_autonomo(ahora_ms)
         runtime['inicio_presencia_ms'] = None
         return
     if dist_cm <= _CFG_SENSORES['umbral_distancia_amenaza_cm'] and pir:
         if estado_actual < ESTADO_AMENAZA:
             print(f'[FSM] → AMENAZA (dist={dist_cm:.0f}cm + PIR)')
             _aplicar_estado_fsm(dispositivos, ESTADO_AMENAZA)
+            _disparar_camara_autonomo(ahora_ms)
         runtime['inicio_presencia_ms'] = ahora_ms
         return
     if dist_cm <= _CFG_SENSORES['umbral_distancia_alerta_cm'] and pir:
         if estado_actual == ESTADO_NORMAL or estado_actual == ESTADO_VIGILANCIA:
             print(f'[FSM] → ALERTA (dist={dist_cm:.0f}cm)')
             _aplicar_estado_fsm(dispositivos, ESTADO_ALERTA)
+            _disparar_camara_autonomo(ahora_ms)
             runtime['inicio_presencia_ms'] = ahora_ms
         elif estado_actual == ESTADO_ALERTA:
             if runtime['inicio_presencia_ms'] is not None:
@@ -175,6 +194,7 @@ def _evaluar_fsm(dispositivos, sensores, ahora_ms):
                 if duracion >= TIEMPO_CONFIRM_ALERTA_MS:
                     print('[FSM] → AMENAZA (alerta sostenida)')
                     _aplicar_estado_fsm(dispositivos, ESTADO_AMENAZA)
+                    _disparar_camara_autonomo(ahora_ms)
         return
     if pir:
         if estado_actual == ESTADO_NORMAL:
