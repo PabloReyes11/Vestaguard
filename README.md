@@ -1,76 +1,61 @@
-# VestaGuard: Chaleco Háptico con Inteligencia Artificial
+# VestaGuard - Sistema de Asistencia IoT para Invidentes
 
-Bienvenido al repositorio oficial del proyecto **VestaGuard**, un sistema embebido tipo wearable (chaleco inteligente) diseñado para asistir en la navegación autónoma de personas con discapacidad visual en entornos urbanos.
+VestaGuard es un chaleco inteligente diseñado para asistir a personas con discapacidad visual, integrando hardware biométrico, visión por computadora en el borde (Edge AI) y telemetría en tiempo real hacia la nube.
 
-Este proyecto fue desarrollado para la materia de **Sistemas Programables** impartida por la Ing. Ma. Verónica Tapia Ibarra en el Instituto Tecnológico de León (TecNM).
+## Estructura del Proyecto
 
----
+El repositorio está organizado profesionalmente siguiendo un patrón de separación de intereses (Separation of Concerns):
 
-##  Integrantes del Equipo
+- **`HAL/` (Hardware Abstraction Layer):** Contiene el firmware en MicroPython para los microcontroladores. Aquí se encuentra la lógica de la Máquina de Estados (FSM) del ESP32 NodeMCU, los controladores asíncronos para los sensores/actuadores físicos, y el script de captura JPEG para la ESP32-CAM.
+- **`Servidor/` (Backend e IA):** Contiene el código Python que se ejecuta en la PC local. Aloja el servidor de Inteligencia Artificial (OpenCV DNN Caffe SSD) para procesar las imágenes entrantes, el puente bidireccional de MQTT a Google Firebase (`firebase_vestaguard.py`), y la configuración del broker Mosquitto local.
+- **`Interfaz/` (Frontend):** Contiene la lógica del lado del cliente (`dashboard.html`), la cual emplea WebSockets nativos de Firebase JS SDK para ofrecer un panel de control reactivo sin latencia (*zero polling*).
 
-| Nombre | Matrícula | Rol |
-|---|---|---|
-| **Álvarez Guevara Estefanía Guadalupe** | 23240077 | Inteligencia Artificial y ESP32-CAM |
-| **Rangel Hernández Aldo** | 23240272 | Firebase y Dashboard |
-| **Reyes Gutiérrez Pablo Alberto** | 23240055 | Conexiones Físicas y Hardware |
+## Requisitos Previos
 
----
+- **Mosquitto Broker:** Descargar e instalar [Eclipse Mosquitto](https://mosquitto.org/download/) en la máquina local.
+- **Python 3.9+:** Necesario para el servidor de IA y el puente a Firebase.
+- **Thonny IDE o esptool:** Para flashear el código de la carpeta `HAL/` en los ESP32.
 
-##  Objetivo General
+## 1. Instalación de Dependencias
 
-Diseñar e implementar un sistema embebido basado en **ESP32** y programado en **MicroPython**, que sustituya la percepción visual mediante sensores. VestaGuard recopila información del entorno y la traduce en **estímulos hápticos direccionales en tiempo real** usando motores vibradores.
+Clona este repositorio y navega a la carpeta principal. Instala todas las dependencias necesarias para los módulos de IA y Nube ejecutando:
 
-VestaGuard integra:
-- **Sensores:** Ultrasónico (HC-SR04), PIR (HC-SR501), GPS (NEO-6M) y MPU6050.
-- **ESP32-CAM (OV3660):** Captura de imágenes enviadas al servidor para detección de rostros mediante Inteligencia Artificial (OpenCV DNN + Caffe SSD).
-- **Actuadores:** Motores vibradores ERM (hombros) y LED RGB.
-- **Red:** Comunicación asíncrona mediante MQTT (broker Mosquitto local).
-- **Cloud:** Integración con Firebase Realtime Database y un Dashboard HTML5 interactivo.
+```bash
+pip install -r requirements.txt
+```
 
----
+## 2. Ejecución del Sistema
 
-##  Estructura del Directorio
+Sigue estos pasos en orden para levantar el entorno completo:
 
-El repositorio está dividido lógicamente en tres carpetas principales que reflejan las capas arquitectónicas del proyecto, más recursos de pruebas y guías maestras:
+1. **Broker MQTT:** Inicia el broker Mosquitto utilizando la configuración local (ubicada en `Servidor/mosquitto_local.conf` para permitir conexiones anónimas en el puerto 1883).
+   ```bash
+   mosquitto -c Servidor/mosquitto_local.conf -v
+   ```
+2. **Servidor de Inteligencia Artificial:** Levanta el analizador de video para procesar las fotos de la ESP32-CAM.
+   ```bash
+   python Servidor/servidor_ia.py
+   ```
+3. **Puente Firebase:** Inicia el puente bidireccional que sincronizará MQTT con Google Cloud.
+   ```bash
+   python Servidor/firebase_vestaguard.py
+   ```
+4. **Hardware (ESP32):** Conecta las baterías a la PowerBank del chaleco para que la Máquina de Estados comience a publicar telemetría.
+5. **Dashboard Local:** Abre el archivo `Interfaz/dashboard.html` en cualquier navegador web.
 
-### 1. `Integración Total MQTT (ESP32 ↔ Python)`
-Contiene la capa lógica del microcontrolador principal (ESP32 NodeMCU) y la capa de abstracción de hardware (HAL):
-- `dispositivos.py`: Clases `SensorBox` y `ActuatorBox` para aislar pines de la lógica.
-- `main_vestaguard.py` y `main.py`: Lógica principal de telemetría y FSM (Máquina de Estados).
-- `boot.py`: Limpia memoria RAM y se conecta a WiFi antes del arranque.
-- `servidor.py`: Interfaz Python por consola para probar telemetría y MQTT.
-- `secrets.py`: Credenciales de red e IP oficial de Mosquitto.
+## 3. Acceso Remoto al Dashboard (Túnel Ngrok)
 
-### 2. `Integración de Inteligencia Artificial en el Ecosistema IoT (ESP32-CAM ↔ Python IA)`
-Contiene el backend de Visión Computacional y la configuración de la cámara:
-- `servidor_ia.py`: Servidor que procesa los frames mediante OpenCV DNN y toma la decisión para mandar un comando.
-- `esp32cam_publicador.py` y `secrets.py`: Firmware de la ESP32-CAM para capturar evidencia y enviarla en fragmentos.
-- `modelo/`: Modelo Caffe preentrenado (`.caffemodel`, `.joblib`, `.prototxt`).
+El `dashboard.html` funciona conectándose directamente a la nube de Firebase, por lo que **cualquier persona puede abrir el archivo en su propia computadora en cualquier parte del mundo**. 
 
-### 3. `Persistencia en la Nube y Dashboard de Control (Firebase ↔ Python ↔ Interfaz)`
-Contiene el puente de integración Cloud y la interfaz gráfica:
-- `firebase_vestaguard.py`: Script bidireccional Python que empuja eventos MQTT hacia Firebase y envía comandos del Dashboard hacia MQTT.
-- `dashboard.html`: Visor en tiempo real (HTML5 + Firebase JS SDK) para mostrar lecturas, alertas y la imagen capturada.
-- `README_FIREBASE.md`: Guía de despliegue oficial.
+Sin embargo, si deseas alojar la interfaz temporalmente desde tu laptop para que otros familiares accedan mediante una URL pública sin necesidad de descargar el archivo:
 
-### 4. `PRUEBAS/`
-Scripts de Python locales para diagnosticar individualmente subsistemas antes de la integración total (Mosquitto, Firebase, Actuadores).
-
-### Archivos de la Raíz
-- `GUIA_DESPLIEGUE_FINAL.md`: Guía exhaustiva de los comandos y flujos para arrancar el ecosistema en un escenario de despliegue oficial.
-- `mosquitto_local.conf`: Archivo de configuración que habilita el servidor MQTT y conexiones anónimas desde la ESP32.
-
----
-
-##  Despliegue Rápido
-
-Para ver las instrucciones detalladas de ejecución de cada componente, por favor consulte la **`GUIA_DESPLIEGUE_FINAL.md`** ubicada en la raíz de este repositorio. El orden de arranque general es:
-
-1. Levantar **Broker Mosquitto** usando `mosquitto_local.conf`.
-2. Levantar servidor local Python **`servidor_ia.py`**.
-3. Levantar puente web **`firebase_vestaguard.py`**.
-4. Abrir **`dashboard.html`** en el navegador.
-5. Encender el chaleco (Batería LiPo / PowerBank).
-
----
-*Repositorio creado como Entrega Final E6 — Instituto Tecnológico de León — Junio 2026*
+1. Sirve la carpeta `Interfaz` en un puerto local (ej. 8000):
+   ```bash
+   cd Interfaz
+   python -m http.server 8000
+   ```
+2. Abre un túnel seguro hacia internet utilizando **Ngrok** (deberás tenerlo instalado):
+   ```bash
+   ngrok http 8000
+   ```
+3. Ngrok te proporcionará un enlace HTTPS público (ej. `https://a1b2c3d4.ngrok.app`). Comparte ese enlace con los familiares para que accedan al panel de control desde su celular o red externa, permitiendo así monitoreo remoto global.
