@@ -1,3 +1,17 @@
+# =================================================================
+# Práctica 2: Integración Total MQTT (ESP32 ↔ Python)
+# Fecha: 08/05/26
+# =================================================================
+# Objetivo:
+# Lógica principal de telemetría y Máquina de Estados Finitos (FSM)
+# de VestaGuard. Conecta sensores, actuadores y red MQTT.
+# =================================================================
+# Integrantes de equipo:
+# - Alvarez Guevara Estefania Guadalupe (ID: 23240077)
+# - Rangel Hernandez Aldo (ID: 23240272)
+# - Reyes Gutierrez Pablo Alberto (ID: 23240055)
+# =================================================================
+
 import gc
 import json
 import ubinascii

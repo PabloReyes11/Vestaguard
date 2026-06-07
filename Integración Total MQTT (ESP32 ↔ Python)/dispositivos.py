@@ -1,3 +1,17 @@
+# =================================================================
+# Práctica 2: Integración Total MQTT (ESP32 ↔ Python)
+# Fecha: 08/05/26
+# =================================================================
+# Objetivo:
+# Capa de Abstracción de Hardware (HAL). Aísla la interacción con
+# los pines físicos (sensores y actuadores) de la lógica principal.
+# =================================================================
+# Integrantes de equipo:
+# - Alvarez Guevara Estefania Guadalupe (ID: 23240077)
+# - Rangel Hernandez Aldo (ID: 23240272)
+# - Reyes Gutierrez Pablo Alberto (ID: 23240055)
+# =================================================================
+
 import math
 import time
 try:

@@ -13,11 +13,14 @@ Repositorio de entrega para la práctica de Sistemas Programables.
 
 El sistema implementa un modelo de publicación/suscripción asincrónico sobre Wi-Fi. El ESP32 actúa como nodo periférico gestionando la capa física (sensores y actuadores) a través de una HAL. La aplicación móvil (MQTT Dash) y el script Python operan como clientes de interfaz y registro de telemetría.
 
-| Componente / Interfaz | Tópico MQTT | Flujo de Datos (QoS 0) | Payload |
+| Componente / Interfaz | Tópico MQTT | Flujo de Datos (QoS 0/1) | Payload |
 |--------|-----------|-----|---------|
-| Sensores (PIR, Ultrasónico, MPU6050) | `vestaguard/telemetria/sensores` | ESP32 Publica → Python/App Suscriben | `{"pir":"NO","distancia_cm":154.3,"aceleracion_y":-0.02}` |
-| Motor Vibrador | `vestaguard/control/vibrador` | App/Python Publican → ESP32 Suscribe | `ON` / `OFF` |
-| LED RGB | `vestaguard/control/rgb` | App/Python Publican → ESP32 Suscribe | `ROJO` / `VERDE` / `APAGAR` |
+| Sensores Físicos (PIR, Ultrasónico, MPU6050, GPS, Botón Pánico) | `vestaguard/telemetria/sensores` | ESP32 Publica → Python/App Suscriben | `{"pir":"NO", "distancia_cm":154.3, "aceleracion_y":-0.02, "gps_lat":21.11, "gps_lon":-101.62, "panico":false}` |
+| FSM / Alertas de Sistema | `vestaguard/alerta/sistema` | ESP32 Publica → App/Python Suscriben | `AMENAZA` / `EMERGENCIA` |
+| Motores Vibradores (Hombro Izq/Der) | `vestaguard/control/vibrador` | App/Python/IA Publican → ESP32 Suscribe | `ON` / `OFF` / `VIBRACION_FUERTE` / `VIBRACION_PULSO` |
+| LED RGB de Señalización | `vestaguard/control/rgb` | App/Python Publican → ESP32 Suscribe | `ROJO` / `VERDE` / `AMARILLO` / `APAGAR` |
+| ESP32-CAM (Cámara Inteligente) | `vestaguard/control/camara_disparo` | ESP32 Publica → ESP32-CAM Suscribe | `CAPTURAR_171...` |
+| Relevador (Estrobo) | `vestaguard/control/relevador` | App/Python Publican → ESP32 Suscribe | `ON` / `OFF` |
 
 **Flujo resumido:** El ESP32 publica telemetría JSON cada 2 s hacia el broker Mosquitto. El servidor Python (servidor.py) se suscribe y muestra los datos con marca de tiempo. Los comandos de control viajan en dirección contraria: MQTT Dash o servidor.py publican en los tópicos de control y la ESP32 delega la acción física a la clase HAL (ActuatorBox).
 
