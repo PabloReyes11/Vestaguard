@@ -1,99 +1,73 @@
-# DESPLIEGUE — VestaGuard
-**Esta carpeta contiene los archivos listos para cargar en cada dispositivo.**
+# Despliegue del Sistema VestaGuard
 
-No modificar los archivos — están corregidos y listos.
-El único archivo que SÍ debes editar antes de cargar es `secrets.py`.
+Este documento contiene la arquitectura de carpetas y los pasos técnicos requeridos para la correcta instalación y despliegue del proyecto VestaGuard.
 
----
+## Arquitectura de Carpetas
 
-##  Estructura
-
-```
-DESPLIEGUE/
-├── HAL/          ← Subir ESTOS 4 archivos a la raíz del ESP32 principal
-│   ├── main.py             ← Firmware completo (FSM + MQTT + HAL)
-│   ├── dispositivos.py     ← HAL de sensores y actuadores
-│   ├── secrets.py          ← ️ EDITAR antes de subir (WiFi + MQTT + Firebase)
-│   ├── boot.py             ← Inicialización segura
-│   └── lib/                ← ️ CARGAR ESTA CARPETA A LA RAÍZ (Subir a /)
-│       └── umqtt/          ← Librería MQTT para MicroPython
+```text
+VestaGuard/
 │
-├── HAL/               ← Subir ESTOS 2 archivos a la raíz de la ESP32-CAM
-│   ├── main.py             ← Captura imagen y publica por MQTT
-│   └── secrets.py          ← ️ EDITAR antes de subir (mismos datos que el ESP32)
+├── HAL/                    ← Código fuente para los microcontroladores (Capa de Abstracción de Hardware)
+│   ├── boot.py             ← Script de inicialización segura
+│   ├── dispositivos.py     ← Controladores de actuadores y sensores
+│   ├── main.py             ← Máquina de estados (FSM) del chaleco
+│   ├── esp32cam_publicador.py ← Script para la ESP32-CAM
+│   ├── secrets.py          ← Credenciales de red y MQTT (requiere edición previa)
+│   └── lib/                ← Bibliotecas externas (MQTT, GPS, pantallas)
 │
-├── Servidor/        ← Scripts que corren en la PC/Laptop con Python
-│   ├── servidor_ia.py      ← Terminal 1: Servidor de IA (recibe frames, decide)
-│   ├── firebase_vestaguard.py ← Terminal 2: Puente MQTT → Firebase
-│   ├── requirements.txt    ← Instalar con: pip install -r requirements.txt
-│   └── modelo/
-│       ├── deploy.prototxt
-│       ├── modelo_vestaguard.joblib
-│       └── res10_300x300_ssd_iter_140000.caffemodel
+├── Servidor/               ← Código backend para la estación base (Python)
+│   ├── servidor_ia.py      ← Servidor de IA (análisis de frames)
+│   ├── firebase_vestaguard.py ← Puente MQTT hacia Google Firebase
+│   ├── requirements_ia.txt ← Dependencias para el entorno de IA
+│   ├── requirements_firebase.txt ← Dependencias para el entorno nube
+│   ├── mosquitto_local.conf ← Archivo de configuración del broker MQTT
+│   └── modelo/             ← Archivos y pesos del modelo Caffe SSD
 │
-└── docs/       ← Abrir index.html en el navegador
-    ├── index.html       ← Control y monitoreo en tiempo real
-    ├── vestaguard.json      ← Estructura de la base de datos Firebase
-    └── ufirebase.py         ← Librería Firebase para MicroPython (copiar al ESP32 si se usa)
+└── docs/                   ← Interfaz de usuario (Frontend SPA)
+    └── index.html          ← Dashboard reactivo y lógica del lado del cliente
 ```
 
 ---
 
-## PASO 1 — Editar secrets.py
+## PASO 1 — Configuración de Credenciales
 
-Antes de subir al ESP32, edita `HAL/secrets.py`:
+Previo a la carga del firmware, es indispensable editar el archivo `HAL/secrets.py` para configurar las credenciales de la red inalámbrica y las direcciones de los servicios:
 
 ```python
-SSID_WIFI       = "NOMBRE_DE_TU_WIFI"     # red donde está la laptop
+SSID_WIFI       = "NOMBRE_DE_TU_WIFI"     # Red local compartida
 CONTRASENA_WIFI = "CONTRASENA"
-HOST_MQTT       = "192.168.X.X"           # IP de la laptop (ver: ipconfig en cmd)
+HOST_MQTT       = "192.168.X.X"           # Dirección IP del broker MQTT (estación base)
 URL_FIREBASE_DB = "https://vestaguard-XXXXXXX-default-rtdb.firebaseio.com/"
 ```
 
-Copiar el mismo `secrets.py` editado a `HAL/secrets.py`.
+Este archivo configurado debe suministrarse a todas las placas ESP32 del proyecto.
 
 ---
 
-## PASO 2 — Instalar dependencias en la laptop
+## PASO 2 — Instalación de Dependencias (Servidor)
+
+Se deben instalar las dependencias requeridas en el entorno de ejecución de la estación base:
 
 ```bash
-pip install -r Servidor/requirements.txt
-```
-
----
-
-## PASO 3 — Subir archivos al ESP32
-
-Con Thonny:
-1. Conectar ESP32 por USB
-2. Abrir cada archivo (main, dispositivos, secrets, boot) → Guardar como → "Dispositivo MicroPython" → con el mismo nombre.
-3. Para la librería MQTT: Hacer clic derecho en la carpeta `lib` (dentro de HAL) y seleccionar "Subir a /". Thonny creará la estructura `/lib/umqtt/simple.py` automáticamente.
-
-Con ampy:
-```bash
-ampy --port COM3 put HAL/main.py main.py
-ampy --port COM3 put HAL/dispositivos.py
-ampy --port COM3 put HAL/secrets.py
-ampy --port COM3 put HAL/boot.py
-```
-
-Para la ESP32-CAM (usar el COM del adaptador FTDI):
-```bash
-ampy --port COM4 put HAL/main.py main.py
-ampy --port COM4 put HAL/secrets.py
+pip install -r Servidor/requirements_ia.txt
+pip install -r Servidor/requirements_firebase.txt
 ```
 
 ---
 
-## PASO 4 — Orden de encendido
+## PASO 3 — Carga de Firmware (ESP32)
 
-```
-1. mosquitto -v                              (Terminal 0 — broker)
-2. python Servidor/servidor_ia.py     (Terminal 1 — IA)
-3. python Servidor/firebase_vestaguard.py  (Terminal 2 — Firebase)
-4. Conectar ESP32 chaleco
-5. Conectar ESP32-CAM
-6. Abrir docs/index.html en el navegador
-```
+Mediante el uso del entorno de desarrollo Thonny:
+1. Conectar el ESP32 a la interfaz USB.
+2. Transferir los scripts correspondientes (`main.py`, `dispositivos.py`, `secrets.py`, `boot.py`) a la memoria flash del dispositivo.
+3. Las bibliotecas contenidas en la carpeta `lib/` deben ser subidas preservando la estructura de directorios en la raíz del microcontrolador.
 
-Ver la guía completa en `GUIA_DESPLIEGUE_FINAL.md` (carpeta raíz del proyecto).
+---
+
+## PASO 4 — Acceso Remoto al Dashboard
+
+El panel de control (Dashboard) se encuentra alojado estáticamente y distribuido globalmente mediante la plataforma GitHub Pages. El monitoreo en tiempo real puede realizarse accediendo a la siguiente URL desde cualquier dispositivo con conectividad web:
+
+**[https://pabloreyes11.github.io/Vestaguard/](https://pabloreyes11.github.io/Vestaguard/)**
+
+El sistema opera de forma autónoma siempre que la estación base mantenga activo el puente de conexión hacia la base de datos en tiempo real.

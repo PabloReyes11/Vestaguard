@@ -4,55 +4,51 @@ VestaGuard es un chaleco inteligente diseñado para asistir a personas con disca
 
 ## Estructura del Proyecto
 
-El repositorio está organizado profesionalmente siguiendo un patrón de separación de intereses (Separation of Concerns):
+El repositorio está organizado profesionalmente siguiendo el patrón de diseño de separación de responsabilidades (Separation of Concerns):
 
-- **`HAL/` (Hardware Abstraction Layer):** Contiene el firmware en MicroPython para los microcontroladores. Aquí se encuentra la lógica de la Máquina de Estados (FSM) del ESP32 NodeMCU, los controladores asíncronos para los sensores/actuadores físicos, y el script de captura JPEG para la ESP32-CAM.
-- **`Servidor/` (Backend e IA):** Contiene el código Python que se ejecuta en la PC local. Aloja el servidor de Inteligencia Artificial (OpenCV DNN Caffe SSD) para procesar las imágenes entrantes, el puente bidireccional de MQTT a Google Firebase (`firebase_vestaguard.py`), y la configuración del broker Mosquitto local.
-- **`docs/` (Frontend):** Contiene la lógica del lado del cliente (`index.html`), la cual emplea WebSockets nativos de Firebase JS SDK para ofrecer un panel de control reactivo sin latencia (*zero polling*).
+- **\HAL/\ (Hardware Abstraction Layer):** Contiene el firmware en MicroPython para los microcontroladores. Aquí reside la lógica de la Máquina de Estados (FSM) del ESP32 NodeMCU, los controladores asíncronos para los sensores/actuadores físicos, y el script de captura JPEG para la ESP32-CAM.
+- **\Servidor/\ (Backend e IA):** Contiene el código Python de ejecución local. Aloja el servidor de Inteligencia Artificial (OpenCV DNN Caffe SSD) encargado de procesar las imágenes entrantes, el puente bidireccional de MQTT a Google Firebase (\irebase_vestaguard.py\), y la configuración del broker Mosquitto local.
+- **\docs/\ (Frontend):** Contiene la lógica de presentación y el cliente web (\index.html\), el cual emplea WebSockets nativos a través del SDK de Firebase para ofrecer un panel de control reactivo en tiempo real.
 
 ## Requisitos Previos
 
-- **Mosquitto Broker:** Descargar e instalar [Eclipse Mosquitto](https://mosquitto.org/download/) en la máquina local.
-- **Python 3.9+:** Necesario para el servidor de IA y el puente a Firebase.
-- **Thonny IDE o esptool:** Para flashear el código de la carpeta `HAL/` en los ESP32.
+- **Mosquitto Broker:** Instalación del servicio [Eclipse Mosquitto](https://mosquitto.org/download/) en el entorno local.
+- **Python 3.9+:** Requerido para la ejecución del servidor de IA y el puente de comunicación hacia Firebase.
+- **Thonny IDE o esptool:** Herramientas necesarias para realizar el flasheo del firmware ubicado en la carpeta \HAL/\ hacia los dispositivos ESP32.
 
 ## 1. Instalación de Dependencias
 
-Clona este repositorio y navega a la carpeta principal. Instala todas las dependencias necesarias para los módulos de IA y Nube ejecutando:
+Se requiere clonar el repositorio y, posteriormente, instalar las dependencias necesarias para los módulos de Inteligencia Artificial y computación en la nube ejecutando:
 
-```bash
+\\ash
 pip install -r requirements.txt
 pip install -r Servidor/requirements_firebase.txt
 pip install -r Servidor/requirements_ia.txt
-```
-
+\
 > [!WARNING]
-> **Seguridad Firebase:** Asegúrate de conseguir la llave privada de Firebase de tu proyecto y guardarla como `serviceAccountKey.json` dentro de la carpeta `Servidor/` antes de arrancar el puente. Este archivo ya está ignorado en Git para tu seguridad.
+> **Seguridad Firebase:** Es indispensable obtener la llave privada de la base de datos de Firebase correspondiente al proyecto y ubicarla bajo el nombre \serviceAccountKey.json\ dentro de la carpeta \Servidor/\ previo a la ejecución del puente de conexión. Por motivos de seguridad, este archivo se encuentra ignorado en el control de versiones.
 
 ## 2. Ejecución del Sistema
 
-Sigue estos pasos en orden para levantar el entorno completo:
+Para el correcto despliegue del entorno, se deben seguir los siguientes pasos secuenciales:
 
-1. **Broker MQTT:** Inicia el broker Mosquitto utilizando la configuración local (ubicada en `Servidor/mosquitto_local.conf` para permitir conexiones anónimas en el puerto 1883).
-   ```bash
+1. **Broker MQTT:** Inicializar el broker Mosquitto empleando la configuración local (ubicada en \Servidor/mosquitto_local.conf\), la cual permite conexiones anónimas en el puerto 1883.
+   \\ash
    mosquitto -c Servidor/mosquitto_local.conf -v
-   ```
-2. **Servidor de Inteligencia Artificial:** Levanta el analizador de video para procesar las fotos de la ESP32-CAM.
-   ```bash
+   \2. **Servidor de Inteligencia Artificial:** Ejecutar el analizador de video para el procesamiento de los cuadros capturados por la ESP32-CAM.
+   \\ash
    python Servidor/servidor_ia.py
-   ```
-3. **Puente Firebase:** Inicia el puente bidireccional que sincronizará MQTT con Google Cloud.
-   ```bash
+   \3. **Puente Firebase:** Iniciar el servicio puente encargado de sincronizar la telemetría local de MQTT con la base de datos de Google Cloud.
+   \\ash
    python Servidor/firebase_vestaguard.py
-   ```
-4. **Hardware (ESP32):** Conecta las baterías a la PowerBank del chaleco para que la Máquina de Estados comience a publicar telemetría.
-5. **Dashboard Local:** Abre el archivo `docs/index.html` en cualquier navegador web.
+   \4. **Hardware (ESP32):** Suministrar energía a la tarjeta principal del chaleco para inicializar la Máquina de Estados y comenzar la transmisión de telemetría.
+5. **Dashboard Local (Opcional):** Para pruebas locales, es posible abrir el archivo \docs/index.html\ en un navegador web convencional.
 
 ## 3. Acceso Remoto al Dashboard
 
-El dashboard ahora está publicado estáticamente y disponible 24/7 a través de GitHub Pages.
-Cualquier familiar o persona autorizada puede acceder al panel de control desde cualquier parte del mundo ingresando a:
+El panel de control (Dashboard) se encuentra publicado de manera estática a través de la plataforma GitHub Pages, garantizando disponibilidad continua.
+El acceso remoto para monitoreo y control se realiza mediante la siguiente dirección web:
 
 **[https://pabloreyes11.github.io/Vestaguard/](https://pabloreyes11.github.io/Vestaguard/)**
 
-Ya no es necesario descargar el archivo HTML, usar Ngrok ni levantar servidores web locales para la interfaz; basta con que la laptop principal esté corriendo el puente de Firebase y conectada a internet.
+El despliegue en la nube elimina la necesidad de alojar el frontend localmente o de emplear túneles HTTP, requiriendo únicamente que el dispositivo servidor (Laptop) mantenga conexión a internet y ejecute el puente de Firebase.
