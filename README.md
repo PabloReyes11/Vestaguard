@@ -48,19 +48,11 @@ Sigue estos pasos en orden para levantar el entorno completo:
 4. **Hardware (ESP32):** Conecta las baterías a la PowerBank del chaleco para que la Máquina de Estados comience a publicar telemetría.
 5. **Dashboard Local:** Abre el archivo `Interfaz/dashboard.html` en cualquier navegador web.
 
-## 3. Acceso Remoto al Dashboard (Túnel Ngrok)
+## 3. Acceso Remoto al Dashboard
 
-El `dashboard.html` funciona conectándose directamente a la nube de Firebase, por lo que **cualquier persona puede abrir el archivo en su propia computadora en cualquier parte del mundo**. 
+El dashboard ahora está publicado estáticamente y disponible 24/7 a través de GitHub Pages.
+Cualquier familiar o persona autorizada puede acceder al panel de control desde cualquier parte del mundo ingresando a:
 
-Sin embargo, si deseas alojar la interfaz temporalmente desde tu laptop para que otros familiares accedan mediante una URL pública sin necesidad de descargar el archivo:
+**[https://pabloreyes11.github.io/Vestaguard/](https://pabloreyes11.github.io/Vestaguard/)**
 
-1. Sirve la carpeta `Interfaz` en un puerto local (ej. 8000):
-   ```bash
-   cd Interfaz
-   python -m http.server 8000
-   ```
-2. Abre un túnel seguro hacia internet utilizando **Ngrok** (deberás tenerlo instalado):
-   ```bash
-   ngrok http 8000
-   ```
-3. Ngrok te proporcionará un enlace HTTPS público (ej. `https://a1b2c3d4.ngrok.app`). Comparte ese enlace con los familiares para que accedan al panel de control desde su celular o red externa, permitiendo así monitoreo remoto global.
+Ya no es necesario descargar el archivo HTML, usar Ngrok ni levantar servidores web locales para la interfaz; basta con que la laptop principal esté corriendo el puente de Firebase y conectada a internet.
