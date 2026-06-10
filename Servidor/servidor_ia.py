@@ -78,6 +78,7 @@ class MotorDecisionIA:
         
         self.ultima_telemetria: Dict[str, Any] = {}
         self.ultima_decision = DecisionIA("normal", 0.0, ACCION_NORMAL, "inicio")
+        self.ultimo_tiempo_emergencia = 0.0
 
     def _cargar_dnn(self):
         if not os.path.exists(self.ruta_prototxt) or not os.path.exists(self.ruta_modelo):
@@ -123,7 +124,7 @@ class MotorDecisionIA:
 
         caida = bool(telemetria.get("caida_detectada"))
         boton_panico = bool(telemetria.get("boton_panico"))
-        distancia_cm = telemetria.get("distancia_cm")
+        distancia_cm = telemetria.get("proximidad_cm")  # CORREGIDO: el ESP32 envia proximidad_cm
         movimiento = bool(telemetria.get("movimiento_pir"))
 
         if boton_panico or caida:
@@ -204,11 +205,16 @@ def crear_cliente_mqtt(motor: MotorDecisionIA):
 
         # Procesar Telemetria del ESP32 Principal
         if mensaje.topic == TEMA_TELEMETRIA:
+            import time
             decision_telemetria = motor.evaluar_telemetria(payload)
             # Solo actualizamos el estado si detecta un cambio brusco, la fusion principal ocurre con la foto
             if decision_telemetria.clasificacion == "emergencia":
-                motor.ultima_decision = decision_telemetria
-                publicar_decision(cliente_mqtt, motor.ultima_decision, motor.ultima_telemetria)
+                ahora = time.time()
+                # Permitir publicar emergencia si cambio el estado, o si pasaron mas de 5 segundos (no bloquea indefinidamente)
+                if motor.ultima_decision.clasificacion != "emergencia" or (ahora - motor.ultimo_tiempo_emergencia) > 5.0:
+                    motor.ultima_decision = decision_telemetria
+                    motor.ultimo_tiempo_emergencia = ahora
+                    publicar_decision(cliente_mqtt, motor.ultima_decision, motor.ultima_telemetria)
 
     cliente.on_connect = on_connect
     cliente.on_message = on_message
