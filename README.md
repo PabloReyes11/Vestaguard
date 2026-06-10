@@ -22,7 +22,12 @@ Clona este repositorio y navega a la carpeta principal. Instala todas las depend
 
 ```bash
 pip install -r requirements.txt
+pip install -r Servidor/requirements_firebase.txt
+pip install -r Servidor/requirements_ia.txt
 ```
+
+> [!WARNING]
+> **Seguridad Firebase:** Asegúrate de conseguir la llave privada de Firebase de tu proyecto y guardarla como `serviceAccountKey.json` dentro de la carpeta `Servidor/` antes de arrancar el puente. Este archivo ya está ignorado en Git para tu seguridad.
 
 ## 2. Ejecución del Sistema
 
