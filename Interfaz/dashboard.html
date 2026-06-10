@@ -2,9 +2,7 @@
 <!--
 OBJETIVO: Dashboard web minimalista de monitoreo y control remoto para VestaGuard.
           Muestra en tiempo real: estado del sistema, sensores, alertas IA, actuadores.
-          Basado en: Sist Progr Unidad4 Firebase.txt (recursos de la maestra).
-          Estructura Firebase: vestaguard/sensores, vestaguard/alertas_ia,
-                               vestaguard/actuadores, vestaguard/sistema
+          Refactorizado a Single Page Application (SPA) Mobile-First con Bottom Nav Bar.
 INTEGRANTES: Alvarez Guevara Estefania Guadalupe (23240077),
              Rangel Hernandez Aldo (23240272),
              Reyes Gutierrez Pablo Alberto (23240055)
@@ -13,7 +11,7 @@ PROYECTO: VestaGuard — Chaleco Haptico Inteligente para Seguridad Urbana
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>VestaGuard — Panel de Control</title>
   <meta name="description" content="Panel de control VestaGuard. Monitoreo en tiempo real vía Firebase."/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -45,719 +43,503 @@ PROYECTO: VestaGuard — Chaleco Haptico Inteligente para Seguridad Urbana
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background:
-    radial-gradient(circle at top, #f8fbff 0%, #ffffff 42%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   min-height: 100vh;
   font-size: 15px;
   line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .app {
-  max-width: 1180px;
+  max-width: 800px;
   margin: 0 auto;
-  padding: 0 16px 64px;
+  padding: 0 16px 80px; /* Padding bottom para la nav bar */
 }
 
 .header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  backdrop-filter: blur(16px);
-  background: rgba(255, 255, 255, .88);
+  position: sticky; top: 0; z-index: 10;
+  backdrop-filter: blur(16px); background: rgba(255, 255, 255, .88);
   border-bottom: 1px solid rgba(229, 231, 235, .9);
-  margin: 0 -16px;
-  padding: 16px;
+  margin: 0 -16px; padding: 12px 16px;
 }
 
-.header-inner {
-  max-width: 1180px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.header-inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.header-left { display: flex; align-items: center; gap: 10px; }
 .logo {
-  width: 44px; height: 44px; border-radius: 14px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px; flex-shrink: 0;
+  width: 40px; height: 40px; border-radius: 12px; background: var(--accent-soft);
+  color: var(--accent); display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700;
 }
-.header-copy { min-width: 0; }
-.header-title { font-size: 18px; font-weight: 700; letter-spacing: -.02em; }
-.header-sub { font-size: 12px; color: var(--muted); }
+.header-title { font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
+.header-sub { font-size: 11px; color: var(--muted); }
 
 .badge {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 8px 12px; border-radius: 999px;
-  font-size: 12px; font-weight: 700; letter-spacing: .2px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--muted);
-  white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; letter-spacing: .2px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--muted);
 }
 .badge-online { color: var(--green); border-color: #bbf7d0; background: #f0fdf4; }
 .badge-offline { color: var(--red); border-color: #fecaca; background: #fef2f2; }
 .badge-demo { color: var(--yellow); border-color: #fde68a; background: #fffbeb; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .badge-online .dot { animation: blink 1.4s ease-in-out infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
 
-.hero {
-  padding: 24px 0 8px;
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(300px, .8fr);
-  gap: 16px;
-  align-items: end;
-}
+/* SPA Views */
+.view-section { display: none; padding-top: 16px; animation: fadeIn 0.3s ease; }
+.view-section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-.hero-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 22px;
-}
-
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--accent);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .14em;
-  margin-bottom: 10px;
-}
-
-.hero-title {
-  font-size: clamp(28px, 4vw, 40px);
-  line-height: 1.05;
-  letter-spacing: -.04em;
-  margin-bottom: 10px;
-}
-
-.hero-text { color: var(--muted); max-width: 62ch; }
-
-.hero-metrics {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.metric {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-s);
-  padding: 14px;
-}
-.metric-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
-.metric-value { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
-.metric-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-.grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(300px, .95fr);
-  gap: 16px;
-  margin-top: 16px;
-}
-
+/* Elementos comunes */
 .stack { display: grid; gap: 16px; }
 
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow: hidden;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
 }
-
-.card-head {
-  padding: 18px 20px 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
+.card-head { padding: 18px 20px 0; }
 .card-title { font-size: 15px; font-weight: 700; }
 .card-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.card-body { padding: 16px 20px 20px; }
 
-.card-body { padding: 18px 20px 20px; }
+.hero-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.metric { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-s); padding: 12px; text-align: center; }
+.metric-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+.metric-value { font-size: 20px; font-weight: 800; letter-spacing: -.02em; }
 
-.cfg-toggle {
-  width: 100%; padding: 0;
-  display: flex; align-items: center; justify-content: space-between;
-  background: none; border: none; cursor: pointer;
-  font-family: inherit; font-size: 14px; font-weight: 600; color: var(--accent);
-  text-align: left;
+/* Modal de Emergencia Global */
+#modal-emergencia {
+  position: fixed; inset: 0; z-index: 99999;
+  background: rgba(220, 38, 38, 0.95); backdrop-filter: blur(10px);
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  color: white; text-align: center; padding: 24px;
 }
-.cfg-toggle .arrow { font-size: 10px; transition: transform .2s; }
-.cfg-toggle.open .arrow { transform: rotate(180deg); }
-.cfg-body { display: none; padding-top: 16px; }
-.cfg-body.show { display: block; }
-.cfg-field { margin-top: 12px; }
-.cfg-field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
-.cfg-field input {
-  width: 100%; padding: 11px 12px;
-  border: 1px solid var(--border-strong); border-radius: 12px;
-  font-size: 13px; font-family: inherit; outline: none;
-  color: var(--text); background: #fff;
+#modal-emergencia.show { display: flex; animation: alertPulse 1.5s infinite alternate; }
+@keyframes alertPulse { from { background: rgba(220, 38, 38, 0.95); } to { background: rgba(153, 27, 27, 0.98); } }
+.modal-icon { font-size: 64px; margin-bottom: 16px; animation: bounce 1s infinite alternate; }
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+.modal-title { font-size: 32px; font-weight: 800; margin-bottom: 12px; line-height: 1.1; }
+.modal-desc { font-size: 16px; margin-bottom: 40px; opacity: 0.9; max-width: 300px; }
+.btn-atender {
+  background: white; color: var(--red); border: none; border-radius: 999px;
+  padding: 18px 40px; font-size: 18px; font-weight: 800; cursor: pointer;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: transform 0.2s;
 }
-.cfg-field input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(37, 99, 235, .08); }
-.btn-primary {
-  margin-top: 14px; width: 100%; padding: 12px 14px;
-  background: var(--accent); color: #fff; border: none;
-  border-radius: 12px; font-size: 14px; font-weight: 700;
-  cursor: pointer; font-family: inherit; transition: transform .15s, opacity .15s;
-}
-.btn-primary:hover { opacity: .96; transform: translateY(-1px); }
-.cfg-note {
-  margin-top: 12px; padding: 12px 14px;
-  background: #f8fafc; border: 1px solid var(--border);
-  border-radius: 12px; font-size: 12px; color: var(--muted);
-  line-height: 1.6;
-}
+.btn-atender:active { transform: scale(0.95); }
 
-.section { margin-top: 16px; }
-.section-label {
-  font-size: 11px; font-weight: 700; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--muted);
-  margin: 0 0 10px 4px;
+/* Bottom Navigation Bar */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: 64px; background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px); border-top: 1px solid var(--border);
+  display: flex; justify-content: space-around; align-items: center;
+  z-index: 9000; padding-bottom: env(safe-area-inset-bottom);
 }
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--muted); cursor: pointer; flex: 1; height: 100%;
+  font-size: 10px; font-weight: 700; border: none; background: transparent;
+  transition: color 0.2s; letter-spacing: 0.05em; text-transform: uppercase;
+}
+.nav-item.active { color: var(--accent); }
+.nav-icon { font-size: 22px; margin-bottom: 2px; }
 
-.ia-banner {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 18px;
-  transition: border-color .3s, box-shadow .3s;
-}
-.ia-banner.normal { border-color: #bbf7d0; box-shadow: 0 0 0 1px #dcfce7; }
-.ia-banner.vigilancia { border-color: #c4b5fd; box-shadow: 0 0 0 1px #ede9fe; }
-.ia-banner.amenaza { border-color: #fde68a; box-shadow: 0 0 0 1px #fef3c7; }
-.ia-banner.emergencia { border-color: #fecaca; box-shadow: 0 0 0 1px #fee2e2; }
-.ia-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-.ia-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
-.ia-chip { padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+/* Estilos Específicos */
+.ia-banner { border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; transition: all .3s; }
+.ia-banner.normal { border-color: #bbf7d0; background: #f0fdf4; }
+.ia-banner.vigilancia { border-color: #c4b5fd; background: #faf5ff; }
+.ia-banner.amenaza { border-color: #fde68a; background: #fffbeb; }
+.ia-banner.emergencia { border-color: #fecaca; background: #fef2f2; }
+.ia-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.ia-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+.ia-chip { padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
 .chip-normal { background: #dcfce7; color: var(--green); }
 .chip-vigilancia { background: #ede9fe; color: var(--purple); }
 .chip-amenaza { background: #fef3c7; color: var(--yellow); }
 .chip-emergencia { background: #fee2e2; color: var(--red); }
-.ia-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.ia-stat { padding: 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--panel); }
-.ia-stat .ia-val { font-size: 22px; font-weight: 800; letter-spacing: -.03em; }
-.ia-stat .ia-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.ia-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ia-stat { padding: 10px; background: white; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+.ia-val { font-size: 16px; font-weight: 800; }
+.ia-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
 
-.sensor-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-.sensor-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-s);
-  padding: 16px;
-  box-shadow: var(--shadow);
-}
+.sensor-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.sensor-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-s); padding: 14px; }
 .sensor-card.ok { border-left: 4px solid var(--green); }
 .sensor-card.warn { border-left: 4px solid var(--yellow); }
 .sensor-card.alerta { border-left: 4px solid var(--red); }
-.sensor-icon { font-size: 18px; margin-bottom: 10px; }
-.sensor-name { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 6px; }
-.sensor-val { font-size: 18px; font-weight: 700; letter-spacing: -.02em; }
-.sensor-unit { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.sensor-name { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.sensor-val { font-size: 18px; font-weight: 800; }
+.sensor-unit { font-size: 11px; color: var(--muted); }
 
-.gps-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-s);
-  padding: 16px;
-  box-shadow: var(--shadow);
-  display: flex; align-items: center; gap: 14px;
-}
-.gps-icon { font-size: 24px; }
-.gps-coords { font-size: 14px; font-weight: 700; color: var(--text); font-family: inherit; }
-.gps-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.gps-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-s); padding: 16px; margin-top: 12px; }
+.gps-head { display: flex; align-items: center; gap: 10px; }
+.gps-coords { font-size: 14px; font-weight: 700; }
+.gps-label { font-size: 11px; color: var(--muted); }
 
-.alerta-list { display: flex; flex-direction: column; gap: 10px; }
-.alerta-item {
-  display: flex; align-items: flex-start; gap: 12px;
-  padding: 14px 16px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: #fff;
-}
-.alerta-dot {
-  width: 10px; height: 10px; border-radius: 50%;
-  flex-shrink: 0; margin-top: 4px;
-}
+.alerta-list { display: flex; flex-direction: column; gap: 8px; }
+.alerta-item { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: #fff; }
+.alerta-dot { width: 10px; height: 10px; border-radius: 50%; }
 .dot-normal { background: var(--green); }
 .dot-vigilancia { background: var(--purple); }
 .dot-amenaza { background: var(--yellow); }
-.dot-emergencia { background: var(--red); box-shadow: 0 0 8px rgba(220,38,38,.25); }
-.alerta-body { flex: 1; min-width: 0; }
-.alerta-nivel { font-size: 14px; font-weight: 700; text-transform: capitalize; }
-.alerta-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
-.conf-bar { height: 4px; background: #e5e7eb; border-radius: 999px; margin-top: 8px; overflow: hidden; }
-.conf-fill { height: 100%; background: var(--accent); border-radius: 999px; transition: width .4s; }
-.vacio { text-align: center; padding: 26px 18px; color: var(--muted); font-size: 13px; }
+.dot-emergencia { background: var(--red); }
+.alerta-body { flex: 1; }
+.alerta-nivel { font-size: 13px; font-weight: 700; text-transform: capitalize; }
+.alerta-meta { font-size: 11px; color: var(--muted); }
+.vacio { text-align: center; padding: 20px; color: var(--muted); font-size: 12px; }
 
-.ctrl-list { display: grid; gap: 1px; }
-.ctrl-item {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 18px; gap: 16px;
-  border-bottom: 1px solid var(--border);
-  background: #fff;
-}
+.ctrl-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--border); }
 .ctrl-item:last-child { border-bottom: none; }
-.ctrl-name { font-size: 14px; font-weight: 700; }
-.ctrl-desc { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.ctrl-name { font-size: 15px; font-weight: 700; }
+.ctrl-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-.toggle { position: relative; width: 46px; height: 26px; flex-shrink: 0; cursor: pointer; }
+/* Toggles optimizados para touch */
+.toggle { position: relative; width: 52px; height: 30px; cursor: pointer; }
 .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
-.track {
-  position: absolute; inset: 0;
-  background: #d1d5db; border-radius: 999px;
-  transition: background .25s;
-}
+.track { position: absolute; inset: 0; background: #d1d5db; border-radius: 999px; transition: background .25s; }
 .toggle input:checked + .track { background: var(--accent); }
-.thumb {
-  position: absolute; top: 3px; left: 3px;
-  width: 20px; height: 20px; border-radius: 50%;
-  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.18);
-  transition: transform .25s cubic-bezier(.34,1.56,.64,1);
-}
-.toggle input:checked ~ .thumb { transform: translateX(20px); }
+.thumb { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .25s; }
+.toggle input:checked ~ .thumb { transform: translateX(22px); }
 
-.rgb-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-.btn-color {
-  width: 34px; height: 34px; border-radius: 50%;
-  border: 1px solid transparent; cursor: pointer;
-  transition: transform .15s, box-shadow .15s;
-}
-.btn-color:hover { transform: scale(1.08); }
-.btn-r { background: #dc2626; }
-.btn-g { background: #16a34a; }
-.btn-b { background: #2563eb; }
-.btn-off {
-  background: #f3f4f6; border-color: #e5e7eb;
-  font-size: 13px; color: var(--muted);
-  width: auto; min-width: 34px; padding: 0 12px;
-}
-.btn-cam {
-  padding: 9px 14px;
-  border: 1px solid var(--border); border-radius: 12px;
-  background: var(--panel); font-size: 13px; font-weight: 700;
-  cursor: pointer; font-family: inherit; color: var(--text);
-}
-.btn-cam:hover { background: #f3f4f6; }
+.rgb-row { display: flex; gap: 10px; }
+.btn-color { width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer; }
+.btn-r { background: #dc2626; } .btn-b { background: #2563eb; }
+.btn-off { background: #f3f4f6; color: var(--muted); font-weight: 700; width: auto; padding: 0 16px; border: 1px solid var(--border); }
 
-.ts-bar {
-  text-align: center; font-size: 12px; color: var(--muted);
-  padding: 10px 14px; margin-top: 16px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-}
+.btn-cam { width: 100%; padding: 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; font-weight: 700; color: var(--text); cursor: pointer; }
+.visor-camara { width: 100%; height: 220px; border-radius: 12px; object-fit: cover; background: #111; margin-top: 12px; }
 
-.footer {
-  text-align: center; font-size: 12px; color: var(--muted);
-  padding: 28px 0 0; line-height: 1.8;
-}
-.footer strong { color: var(--text); }
+.cfg-field { margin-bottom: 12px; }
+.cfg-field label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+.cfg-field input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-family: monospace; }
+.btn-primary { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 8px; }
 
-.hide-demo { display: none !important; }
-
-@media (max-width: 920px) {
-  .hero, .grid { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 720px) {
-  .app { padding: 0 12px 56px; }
-  .header { margin: 0 -12px; padding: 12px; }
-  .header-inner { align-items: flex-start; }
-  .badge { align-self: flex-start; }
-  .hero-card { padding: 18px; }
-  .hero-metrics, .ia-row, .sensor-grid { grid-template-columns: 1fr; }
-  .ctrl-item { align-items: flex-start; flex-direction: column; }
-  .rgb-row { justify-content: flex-start; }
-}
+.footer { text-align: center; font-size: 11px; color: var(--muted); padding: 20px 0; line-height: 1.6; }
 </style>
 </head>
 <body>
+
+<!-- MODAL EMERGENCIA -->
+<div id="modal-emergencia">
+  <div class="modal-icon">!</div>
+  <div class="modal-title">¡ALERTA DE SEGURIDAD!</div>
+  <div class="modal-desc" id="modal-desc">El usuario ha entrado en un estado de amenaza reportado por la IA o caída.</div>
+  <button class="btn-atender" onclick="cerrarModalEmergencia()">Atender Emergencia</button>
+</div>
+
 <div class="app">
 
-<!-- ══ HEADER ══ -->
-<header class="header">
-  <div class="header-inner">
-    <div class="header-left">
-      <div class="logo">VG</div>
-      <div class="header-copy">
-        <div class="header-title">VestaGuard</div>
-        <div class="header-sub">Dashboard Firebase para monitoreo y control remoto</div>
-      </div>
-    </div>
-    <div id="badge" class="badge badge-offline">
-      <span class="dot"></span>
-      <span id="badge-txt">OFFLINE</span>
-    </div>
-  </div>
-</header>
-
-<div id="ts-bar" class="ts-bar">Actualizando...</div>
-
-<section class="hero">
-  <div class="hero-metrics">
-    <div class="metric">
-      <div class="metric-label">Sistema</div>
-      <div class="metric-value" id="metric-sistema">OFFLINE</div>
-      <div class="metric-sub">Estado actual</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Alertas</div>
-      <div class="metric-value" id="metric-alertas">0</div>
-      <div class="metric-sub">Últimas 5</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Sensores</div>
-      <div class="metric-value" id="metric-sensores">0</div>
-      <div class="metric-sub">Lecturas activas</div>
-    </div>
-  </div>
-</section>
-
-<div class="grid">
-  <div class="stack">
-    <div class="card">
-      <div class="card-head">
+  <!-- HEADER GLOBAL -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-left">
+        <div class="logo">VG</div>
         <div>
-          <div class="card-title">Conexión Firebase</div>
-          <div class="card-sub">Configura la base de datos en tiempo real para operar VestaGuard.</div>
+          <div class="header-title">VestaGuard</div>
+          <div class="header-sub" id="ts-bar">Esperando conexión...</div>
         </div>
       </div>
-      <div class="card-body">
-        <button class="cfg-toggle" id="cfg-btn" onclick="toggleCfg()">
-          Mostrar configuración
-          <span class="arrow">▼</span>
-        </button>
-        <div class="cfg-body" id="cfg-body">
-          <div class="cfg-field">
-            <label>API Key</label>
-            <input id="c-apiKey" type="text" value="AIzaSyD3rAg3WZkbuF-MGrpuB3x5i67ayYEQtsg"/>
-          </div>
-          <div class="cfg-field">
-            <label>Database URL</label>
-            <input id="c-dbURL" type="text" value="https://chaleco-vestaguard-default-rtdb.firebaseio.com"/>
-          </div>
-          <div class="cfg-field">
-            <label>Auth Domain</label>
-            <input id="c-authDomain" type="text" value="chaleco-vestaguard.firebaseapp.com"/>
-          </div>
-          <div class="cfg-field">
-            <label>Project ID</label>
-            <input id="c-projectId" type="text" value="chaleco-vestaguard"/>
-          </div>
-          <button class="btn-primary" onclick="conectarFirebase()">Conectar Firebase</button>
-          <p class="cfg-note">
-            Este dashboard está preparado para despliegue real. No usa demo automática.
-            Si aún no conectas Firebase, la vista permanece en estado offline.
-          </p>
-        </div>
+      <div id="badge" class="badge badge-offline">
+        <span class="dot"></span>
+        <span id="badge-txt">OFFLINE</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       VISTA 1: MONITOREO (LANDING VIEW)
+       ========================================== -->
+  <section id="view-monitoreo" class="view-section active">
+    <div class="hero-metrics">
+      <div class="metric">
+        <div class="metric-label">Sistema</div>
+        <div class="metric-value" id="metric-sistema">OFF</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Alertas</div>
+        <div class="metric-value" id="metric-alertas">0</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Batería</div>
+        <div class="metric-value" id="metric-bat-min">—</div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-head">
-        <div>
-          <div class="card-title">Última decisión IA</div>
-          <div class="card-sub">Ruta: vestaguard/alertas_ia</div>
+    <div class="stack">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Estado IA en Tiempo Real</div>
+          <div class="card-sub">vestaguard/alertas_ia</div>
         </div>
-      </div>
-      <div class="card-body">
-        <div class="ia-banner normal" id="ia-banner">
-          <div class="ia-head">
-            <span class="ia-label">Clasificación actual</span>
-            <span class="ia-chip chip-normal" id="ia-chip">NORMAL</span>
-          </div>
-          <div class="ia-row">
-            <div class="ia-stat">
-              <div class="ia-val" id="ia-clas">—</div>
-              <div class="ia-sub">Clasificación</div>
+        <div class="card-body">
+          <div class="ia-banner normal" id="ia-banner">
+            <div class="ia-head">
+              <span class="ia-label">Clasificación</span>
+              <span class="ia-chip chip-normal" id="ia-chip">NORMAL</span>
             </div>
-            <div class="ia-stat">
-              <div class="ia-val" id="ia-conf">—</div>
-              <div class="ia-sub">Confianza</div>
-            </div>
-            <div class="ia-stat">
-              <div class="ia-val" id="ia-accion">—</div>
-              <div class="ia-sub">Acción</div>
+            <div class="ia-row">
+              <div class="ia-stat"><div class="ia-val" id="ia-clas">—</div><div class="ia-sub">Sujeto</div></div>
+              <div class="ia-stat"><div class="ia-val" id="ia-conf">—</div><div class="ia-sub">Certeza</div></div>
+              <div class="ia-stat"><div class="ia-val" id="ia-accion">—</div><div class="ia-sub">Acción</div></div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
+      <div class="gps-card" id="c-gps">
+        <div class="gps-head">
+          <div style="font-size:24px;"></div>
+          <div>
+            <div class="gps-coords" id="v-gps">Buscando satélites...</div>
+            <div class="gps-label">NEO-6M GPS</div>
+          </div>
+        </div>
+        <iframe id="gps-map" style="display:none; width:100%; height:180px; border:none; border-radius:8px; margin-top:12px;" allowfullscreen></iframe>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Alertas Recientes</div>
+        </div>
+        <div class="card-body">
+          <div class="alerta-list" id="lista-alertas">
+            <div class="vacio">Historial limpio.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       VISTA 2: SENSORES RAW
+       ========================================== -->
+  <section id="view-sensores" class="view-section">
     <div class="card">
       <div class="card-head">
-        <div>
-          <div class="card-title">Sensores</div>
-          <div class="card-sub">Ruta: vestaguard/sensores</div>
-        </div>
+        <div class="card-title">Telemetría de Hardware</div>
+        <div class="card-sub">Lecturas crudas del ESP32</div>
       </div>
       <div class="card-body">
         <div class="sensor-grid">
           <div class="sensor-card" id="c-dist">
-            <div class="sensor-name">Distancia</div>
+            <div class="sensor-name">Distancia (HC-SR04)</div>
             <div class="sensor-val" id="v-dist">—</div>
-            <div class="sensor-unit">cm · HC-SR04</div>
+            <div class="sensor-unit">cm</div>
           </div>
           <div class="sensor-card" id="c-pir">
-            <div class="sensor-name">PIR</div>
+            <div class="sensor-name">Movimiento (PIR)</div>
             <div class="sensor-val" id="v-pir">—</div>
-            <div class="sensor-unit">Movimiento pasivo</div>
+            <div class="sensor-unit">Pasivo</div>
           </div>
           <div class="sensor-card" id="c-acel">
-            <div class="sensor-name">Aceleración Y</div>
+            <div class="sensor-name">Acel Y (MPU6050)</div>
             <div class="sensor-val" id="v-acel">—</div>
-            <div class="sensor-unit">g · MPU6050</div>
+            <div class="sensor-unit">Fuerza G</div>
           </div>
           <div class="sensor-card" id="c-caida">
-            <div class="sensor-name">Caída</div>
+            <div class="sensor-name">Caída (MPU6050)</div>
             <div class="sensor-val" id="v-caida">—</div>
-            <div class="sensor-unit">MPU6050</div>
+            <div class="sensor-unit">Estado</div>
           </div>
           <div class="sensor-card" id="c-panico">
-            <div class="sensor-name">Pánico</div>
+            <div class="sensor-name">Botón Pánico</div>
             <div class="sensor-val" id="v-panico">—</div>
-            <div class="sensor-unit">GPIO 32</div>
+            <div class="sensor-unit">Físico</div>
           </div>
           <div class="sensor-card" id="c-bat">
-            <div class="sensor-name">Batería</div>
+            <div class="sensor-name">Batería PowerBank</div>
             <div class="sensor-val" id="v-bat">—</div>
-            <div class="sensor-unit">%</div>
-          </div>
-        </div>
-        <div class="gps-card" style="margin-top:12px" id="c-gps">
-          <div>
-            <div class="gps-coords" id="v-gps">Sin fix GPS</div>
-            <div class="gps-label">NEO-6M · vestaguard/sensores</div>
+            <div class="sensor-unit">Porcentaje</div>
           </div>
         </div>
       </div>
     </div>
+  </section>
 
-    <div class="card">
-      <div class="card-head">
-        <div>
-          <div class="card-title">Alertas recientes</div>
-          <div class="card-sub">Últimas 5 alertas registradas</div>
+  <!-- ==========================================
+       VISTA 3: ACTUADORES Y CAMARA
+       ========================================== -->
+  <section id="view-actuadores" class="view-section">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Cámara y Visión (ESP32-CAM)</div></div>
+        <div class="card-body">
+          <button class="btn-cam" onclick="enviarCaptura()">Forzar Captura Manual</button>
+          <img id="visor-camara" class="visor-camara" src="" alt="Esperando captura...">
+          <div id="cam-timestamp" style="font-size:11px; color:var(--muted); margin-top:8px; text-align:center;">--:--:--</div>
         </div>
       </div>
-      <div class="card-body">
-        <div class="alerta-list" id="lista-alertas">
-          <div class="vacio">Sin alertas registradas aún.</div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="stack">
-    <div class="card">
-      <div class="card-head">
-        <div>
-          <div class="card-title">Estado del sistema</div>
-          <div class="card-sub">Ruta: vestaguard/sistema/estado</div>
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="metric" style="margin-bottom:12px">
-          <div class="metric-label">Conectividad</div>
-          <div class="metric-value" id="metric-conectividad">OFFLINE</div>
-          <div class="metric-sub">Se actualiza al conectar Firebase</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Última actualización</div>
-          <div class="metric-value" style="font-size:18px" id="metric-update">—</div>
-          <div class="metric-sub">Tiempo local del navegador</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-head">
-        <div>
-          <div class="card-title">Control remoto</div>
-          <div class="card-sub">Ruta: vestaguard/actuadores</div>
-        </div>
-      </div>
-      <div class="card-body" style="padding-top: 6px">
-        <div class="ctrl-list">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Control Físico Remoto</div></div>
+        <div class="card-body" style="padding-top:0;">
           <div class="ctrl-item">
-            <div>
-              <div class="ctrl-name">Motores hápticos</div>
-              <div class="ctrl-desc">Vibración del chaleco</div>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="tog-motor" onchange="enviarActuador('motores', this.checked)"/>
-              <div class="track"></div>
-              <div class="thumb"></div>
-            </label>
+            <div><div class="ctrl-name">Motores Hápticos</div><div class="ctrl-desc">Forzar vibración de hombros</div></div>
+            <label class="toggle"><input type="checkbox" id="tog-motor" onchange="enviarActuador('motores', this.checked)"/><div class="track"></div><div class="thumb"></div></label>
           </div>
           <div class="ctrl-item">
-            <div>
-              <div class="ctrl-name">LED RGB</div>
-              <div class="ctrl-desc">Indicador visual</div>
-            </div>
+            <div><div class="ctrl-name">Sirena / Relevador</div><div class="ctrl-desc">Activar módulo HW-383</div></div>
+            <label class="toggle"><input type="checkbox" id="tog-rele" onchange="enviarActuador('relevador', this.checked)"/><div class="track"></div><div class="thumb"></div></label>
+          </div>
+          <div class="ctrl-item" style="border:none;">
+            <div><div class="ctrl-name">Color LED RGB</div></div>
             <div class="rgb-row">
-              <button class="btn-color btn-r" title="Rojo" onclick="enviarRGB('ROJO')"></button>
-              <!-- <button class="btn-color btn-g" title="Verde (EXCLUIDO por hardware)" onclick="enviarRGB('VERDE')"></button> -->
-              <button class="btn-color btn-b" title="Azul" onclick="enviarRGB('AZUL')"></button>
-              <button class="btn-color btn-off" title="Apagar" onclick="enviarRGB('APAGAR')"></button>
+              <button class="btn-color btn-r" onclick="enviarRGB('ROJO')"></button>
+              <button class="btn-color btn-b" onclick="enviarRGB('AZUL')"></button>
+              <button class="btn-color btn-off" onclick="enviarRGB('APAGAR')">OFF</button>
             </div>
-          </div>
-          <div class="ctrl-item">
-            <div>
-              <div class="ctrl-name">Relevador</div>
-              <div class="ctrl-desc">Salida auxiliar / emergencia</div>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="tog-rele" onchange="enviarActuador('relevador', this.checked)"/>
-              <div class="track"></div>
-              <div class="thumb"></div>
-            </label>
-          </div>
-          <div class="ctrl-item">
-            <div>
-              <div class="ctrl-name">ESP32-CAM</div>
-              <div class="ctrl-desc">Disparo manual de captura</div>
-            </div>
-            <button class="btn-cam" onclick="enviarCaptura()">Capturar</button>
-          </div>
-          <div class="ctrl-item" style="display:flex; flex-direction:column; align-items:center;">
-            <div style="width:100%; text-align:left; margin-bottom:10px;">
-              <div class="ctrl-name">Visor de Cámara</div>
-              <div class="ctrl-desc">Última captura recibida</div>
-            </div>
-            <img id="visor-camara" src="" alt="Sin captura" style="width:100%; max-width:320px; border-radius:8px; border:1px solid #333; background:#1a1a1a; min-height:240px; object-fit:cover;">
-            <div id="cam-timestamp" style="font-size:0.8rem; color:#aaa; margin-top:5px;">--:--:--</div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
+  </section>
 
-<footer class="footer" style="margin-top:24px">
-  <strong>VestaGuard</strong> — Chaleco Háptico Inteligente para Seguridad Urbana<br/>
-  Alvarez Guevara Estefania Guadalupe (23240077) &nbsp;·&nbsp;
-  Rangel Hernández Aldo (23240272) &nbsp;·&nbsp;
-  Reyes Gutiérrez Pablo Alberto (23240055)<br/>
-  Sistemas Programables — ISC — TecNM / IT León — 2026
-</footer>
+  <!-- ==========================================
+       VISTA 4: AJUSTES (CREDENCIALES Y LOGS)
+       ========================================== -->
+  <section id="view-ajustes" class="view-section">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Configuración Firebase</div>
+          <div class="card-sub">Credenciales del proyecto</div>
+        </div>
+        <div class="card-body">
+          <div class="cfg-field"><label>API Key</label><input id="c-apiKey" type="text" value="AIzaSyD3rAg3WZkbuF-MGrpuB3x5i67ayYEQtsg"/></div>
+          <div class="cfg-field"><label>Database URL</label><input id="c-dbURL" type="text" value="https://chaleco-vestaguard-default-rtdb.firebaseio.com"/></div>
+          <div class="cfg-field"><label>Auth Domain</label><input id="c-authDomain" type="text" value="chaleco-vestaguard.firebaseapp.com"/></div>
+          <div class="cfg-field"><label>Project ID</label><input id="c-projectId" type="text" value="chaleco-vestaguard"/></div>
+          <button class="btn-primary" onclick="conectarFirebase()">Conectar Nube</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body" style="text-align:center;">
+          <div style="font-size:12px; color:var(--muted); font-weight:700; margin-bottom:4px;">ESTADO DE RED</div>
+          <div id="metric-conectividad" style="font-size:16px; font-weight:800; color:var(--text);">OFFLINE</div>
+        </div>
+      </div>
+      <footer class="footer">
+        <strong>VestaGuard Dashboard SPA</strong><br/>
+        Alvarez, Rangel, Reyes (IT León - 2026)
+      </footer>
+    </div>
+  </section>
 
 </div><!-- /app -->
 
+<!-- BOTTOM NAVIGATION BAR -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="switchTab('view-monitoreo', this)">
+    <span class="nav-icon"></span><span>Inicio</span>
+  </button>
+  <button class="nav-item" onclick="switchTab('view-sensores', this)">
+    <span class="nav-icon"></span><span>Sensores</span>
+  </button>
+  <button class="nav-item" onclick="switchTab('view-actuadores', this)">
+    <span class="nav-icon"></span><span>Control</span>
+  </button>
+  <button class="nav-item" onclick="switchTab('view-ajustes', this)">
+    <span class="nav-icon"></span><span>Ajustes</span>
+  </button>
+</nav>
+
 <script>
-/*
- * VestaGuard Dashboard — Lógica JavaScript
- * Basado en: Sist Progr Unidad4 Firebase.txt (maestra)
- * Nodos Firebase usados:
- *   vestaguard/sensores       → última lectura de sensores
- *   vestaguard/alertas_ia     → historial de alertas IA (últimas 5)
- *   vestaguard/actuadores     → estado/escritura de actuadores
- *   vestaguard/sistema/estado → online/offline
- */
+/* Lógica SPA e Interrupciones */
 'use strict';
+const app = { db: null, demo: true, alertas: [], gps_lat: null, gps_lon: null };
 
-const app = { db: null, demo: true, alertas: [], timer: null };
+function ts() { return new Date().toLocaleTimeString('es-MX'); }
 
-/* ── Helpers ── */
-function ts() { return new Date().toLocaleString('es-MX'); }
+function switchTab(tabId, btnEl) {
+  // Ocultar todas las vistas
+  document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+  // Mostrar la vista objetivo
+  document.getElementById(tabId).classList.add('active');
+  
+  // Actualizar botones de navegación
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  btnEl.classList.add('active');
 
+  // Lazy Load Iframe si entramos a Monitoreo y hay GPS válido
+  if (tabId === 'view-monitoreo' && app.gps_lat !== null) {
+    cargarMapa();
+  }
+}
+
+function cargarMapa() {
+  const mapa = document.getElementById('gps-map');
+  // Solo asigna el src si no lo tiene ya asignado
+  if (!mapa.src || mapa.src === '') {
+    mapa.style.display = 'block';
+    mapa.src = `https://maps.google.com/maps?q=${app.gps_lat},${app.gps_lon}&hl=es&z=16&output=embed`;
+  }
+}
+
+function lanzarEmergenciaModal(desc) {
+  document.getElementById('modal-desc').innerText = desc || "Peligro Inminente Detectado";
+  document.getElementById('modal-emergencia').classList.add('show');
+}
+
+function cerrarModalEmergencia() {
+  document.getElementById('modal-emergencia').classList.remove('show');
+}
+
+/* Lógica Firebase UI */
 function setEstado(online, demo) {
   const b = document.getElementById('badge');
-  const t = document.getElementById('badge-txt');
   b.className = 'badge ' + (demo ? 'badge-demo' : online ? 'badge-online' : 'badge-offline');
-  t.textContent = demo ? 'DEMO' : online ? 'ONLINE' : 'OFFLINE';
-  document.getElementById('metric-conectividad').textContent = demo ? 'DEMO' : online ? 'ONLINE' : 'OFFLINE';
-  document.getElementById('metric-sistema').textContent = demo ? 'DEMO' : online ? 'ONLINE' : 'OFFLINE';
-  document.getElementById('ts-bar').textContent = 'Actualizado: ' + ts();
-  document.getElementById('metric-update').textContent = ts();
+  document.getElementById('badge-txt').textContent = demo ? 'DEMO' : online ? 'ONLINE' : 'OFFLINE';
+  document.getElementById('metric-sistema').textContent = demo ? 'DEMO' : online ? 'ON' : 'OFF';
+  document.getElementById('metric-conectividad').textContent = demo ? 'MODO DEMO' : online ? 'CONECTADO' : 'DESCONECTADO';
+  document.getElementById('ts-bar').textContent = 'Sync: ' + ts();
 }
 
-/* ── Config toggle ── */
-function toggleCfg() {
-  const btn = document.getElementById('cfg-btn');
-  const body = document.getElementById('cfg-body');
-  btn.classList.toggle('open');
-  body.classList.toggle('show');
-}
-
-/* ── Sensores ── */
 function pintarSensores(d) {
-  const set = (id, v, sfx) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = (v != null) ? v + (sfx || '') : '—';
-  };
-  let activos = 0;
-
+  const set = (id, v, sfx) => { const el = document.getElementById(id); if (el) el.textContent = (v != null) ? v + (sfx || '') : '—'; };
+  
   const dist = d.distancia_cm;
   set('v-dist', dist != null ? Math.round(dist) : null, ' cm');
-  const cd = document.getElementById('c-dist');
-  cd.className = 'sensor-card ' + (dist <= 80 ? 'alerta' : dist <= 150 ? 'warn' : 'ok');
-  if (dist != null) activos++;
+  document.getElementById('c-dist').className = 'sensor-card ' + (dist <= 80 ? 'alerta' : dist <= 150 ? 'warn' : 'ok');
 
   const pir = d.movimiento_pir;
-  set('v-pir', pir ? 'DETECTADO' : 'Normal');
+  set('v-pir', pir ? 'MOVIMIENTO' : 'Normal');
   document.getElementById('c-pir').className = 'sensor-card ' + (pir ? 'alerta' : 'ok');
-  if (pir != null) activos++;
 
   set('v-acel', d.aceleracion_y != null ? d.aceleracion_y.toFixed(2) : null, ' g');
-  if (d.aceleracion_y != null) activos++;
-
+  
   const caida = d.caida_detectada;
   set('v-caida', caida ? '¡CAÍDA!' : 'Normal');
   document.getElementById('c-caida').className = 'sensor-card ' + (caida ? 'alerta' : 'ok');
-  if (caida != null) activos++;
+  
+  if (caida) lanzarEmergenciaModal("Se ha detectado una caída abrupta (MPU6050).");
 
   const panico = d.boton_panico;
   set('v-panico', panico ? '¡ACTIVO!' : 'Normal');
   document.getElementById('c-panico').className = 'sensor-card ' + (panico ? 'alerta' : 'ok');
-  if (panico != null) activos++;
+  
+  if (panico) lanzarEmergenciaModal("El usuario presionó el botón de Pánico Físico.");
 
   const bat = d.bateria_pct;
   set('v-bat', bat != null ? bat : null, '%');
+  set('metric-bat-min', bat != null ? bat + '%' : '—');
   document.getElementById('c-bat').className = 'sensor-card ' + (bat < 20 ? 'alerta' : bat < 40 ? 'warn' : 'ok');
-  if (bat != null) activos++;
 
   const lat = d.gps_latitud, lon = d.gps_longitud;
   if (lat != null && lon != null) {
+    app.gps_lat = lat; app.gps_lon = lon;
     document.getElementById('v-gps').textContent = lat.toFixed(5) + ', ' + lon.toFixed(5);
-    document.getElementById('c-gps').style.borderLeft = d.gps_fijado ? '3px solid #16a34a' : '3px solid #d97706';
-    activos++;
+    document.getElementById('c-gps').style.borderLeft = d.gps_fijado ? '4px solid #16a34a' : '4px solid #d97706';
+    
+    // Si la pestaña actual es monitoreo, forzar carga
+    if (document.getElementById('view-monitoreo').classList.contains('active')) {
+      cargarMapa();
+    }
   }
-
-  document.getElementById('metric-sensores').textContent = String(activos);
-  document.getElementById('ts-bar').textContent = 'Actualizado: ' + ts();
-  document.getElementById('metric-update').textContent = ts();
 }
 
-/* ── IA ── */
-const CHIP_CLS = {
-  normal:     'chip-normal',
-  vigilancia: 'chip-vigilancia',
-  amenaza:    'chip-amenaza',
-  emergencia: 'chip-emergencia',
-};
+const CHIP_CLS = { normal: 'chip-normal', vigilancia: 'chip-vigilancia', amenaza: 'chip-amenaza', emergencia: 'chip-emergencia' };
 const BANNER_CLS = { normal:'normal', vigilancia:'vigilancia', amenaza:'amenaza', emergencia:'emergencia' };
 
 function pintarIA(d) {
@@ -765,74 +547,68 @@ function pintarIA(d) {
   document.getElementById('ia-clas').textContent  = clas.toUpperCase();
   document.getElementById('ia-conf').textContent  = d.confianza != null ? (d.confianza * 100).toFixed(0) + '%' : '—';
   document.getElementById('ia-accion').textContent = d.accion || '—';
+  
   const chip = document.getElementById('ia-chip');
   chip.textContent = clas.toUpperCase();
   chip.className   = 'ia-chip ' + (CHIP_CLS[clas] || CHIP_CLS.normal);
   document.getElementById('ia-banner').className = 'ia-banner ' + (BANNER_CLS[clas] || 'normal');
+
+  // Interrupción Global
+  if (clas === 'amenaza' || clas === 'emergencia') {
+    lanzarEmergenciaModal(`La IA detectó una ${clas.toUpperCase()} frente al usuario.`);
+  }
 }
 
-/* ── Alertas ── */
 function agregarAlerta(d) {
   const clas = (d.clasificacion || 'normal').toLowerCase();
   app.alertas.unshift({ clas, ts: d.timestamp_local || d.timestamp || ts(), conf: d.confianza || 0, accion: d.accion || '' });
   if (app.alertas.length > 5) app.alertas.pop();
-  pintarListaAlertas();
-  document.getElementById('metric-alertas').textContent = String(app.alertas.length);
-}
-
-function pintarListaAlertas() {
+  
   const lista = document.getElementById('lista-alertas');
-  if (!app.alertas.length) { lista.innerHTML = '<div class="vacio">Sin alertas registradas aún.</div>'; return; }
   lista.innerHTML = '';
   app.alertas.forEach(a => {
-    const el = document.createElement('div');
-    el.className = 'alerta-item';
-    el.innerHTML = `
-      <div class="alerta-dot dot-${a.clas}"></div>
-      <div class="alerta-body">
-        <div class="alerta-nivel">${a.clas}</div>
-        <div class="alerta-meta">${a.ts}${a.accion ? ' — ' + a.accion : ''}</div>
-        <div class="conf-bar"><div class="conf-fill" style="width:${Math.round(a.conf*100)}%"></div></div>
+    lista.innerHTML += `
+      <div class="alerta-item">
+        <div class="alerta-dot dot-${a.clas}"></div>
+        <div class="alerta-body">
+          <div class="alerta-nivel">${a.clas}</div>
+          <div class="alerta-meta">${a.ts}${a.accion ? ' — ' + a.accion : ''}</div>
+        </div>
       </div>`;
-    lista.appendChild(el);
   });
+  document.getElementById('metric-alertas').textContent = app.alertas.length;
 }
 
-/* ── Actuadores ── */
-function enviarActuador(act, encendido) {
-  const val = encendido ? 'ON' : 'OFF';
-  _send(act, val);
-}
+function enviarActuador(act, encendido) { _send(act, encendido ? 'ON' : 'OFF'); }
 function enviarRGB(color) { _send('rgb', color); }
-function enviarCaptura()  { _send('camara_disparo', 'CAPTURAR_' + Date.now()); }
+function enviarCaptura()  { _send('camara_disparo', 'CAPTURAR_' + Date.now()); alert("Comando de captura enviado al ESP32."); }
 
 function _send(act, val) {
   if (app.db && !app.demo) {
     app.db.ref('vestaguard/actuadores').update({ [act]: val, ultimo_cambio: new Date().toISOString() });
+  } else {
+    alert("Conecta Firebase para enviar comandos reales.");
   }
 }
 
-/* ── Firebase ── */
 function conectarFirebase() {
-  const apiKey     = document.getElementById('c-apiKey').value.trim();
-  const dbURL      = document.getElementById('c-dbURL').value.trim();
-  const authDomain = document.getElementById('c-authDomain').value.trim();
-  const projectId  = document.getElementById('c-projectId').value.trim();
-
-  if (!apiKey || !dbURL) {
-    alert('Ingresa al menos el API Key y la Database URL.\nSigue el README_FIREBASE.md.');
-    return;
-  }
+  const apiKey = document.getElementById('c-apiKey').value.trim();
+  const dbURL = document.getElementById('c-dbURL').value.trim();
+  if (!apiKey || !dbURL) return alert('Datos incompletos.');
+  
   try {
-    const fapp = firebase.initializeApp({ apiKey, authDomain, databaseURL: dbURL, projectId });
-    app.db   = firebase.database(fapp);
+    const fapp = firebase.initializeApp({
+      apiKey, databaseURL: dbURL,
+      authDomain: document.getElementById('c-authDomain').value.trim(),
+      projectId: document.getElementById('c-projectId').value.trim()
+    });
+    app.db = firebase.database(fapp);
     app.demo = false;
     suscribir();
     setEstado(true, false);
-    document.getElementById('cfg-btn').innerHTML = ' Firebase conectado <span class="arrow">▼</span>';
-  } catch(e) {
-    alert('Error Firebase: ' + e.message);
-  }
+    // Cambiar a pestaña inicio automáticamente
+    document.querySelector('.bottom-nav .nav-item').click();
+  } catch(e) { alert('Error: ' + e.message); }
 }
 
 function suscribir() {
@@ -841,33 +617,22 @@ function suscribir() {
   db.ref('vestaguard/alertas_ia').limitToLast(5).on('child_added', s => {
     const d = s.val(); if (d) { pintarIA(d); agregarAlerta(d); }
   });
-  db.ref('vestaguard/sistema/estado').on('value', s => {
-    const d = s.val(); if (d) setEstado(d.online === true, false);
-  });
+  db.ref('vestaguard/sistema/estado').on('value', s => { const d = s.val(); if (d) setEstado(d.online === true, false); });
   db.ref('vestaguard/actuadores').on('value', s => {
     const d = s.val() || {};
-    if (d.motores   !== undefined) document.getElementById('tog-motor').checked = d.motores   === 'ON';
-    if (d.relevador !== undefined) document.getElementById('tog-rele').checked  = d.relevador === 'ON';
+    if (d.motores !== undefined) document.getElementById('tog-motor').checked = d.motores === 'ON';
+    if (d.relevador !== undefined) document.getElementById('tog-rele').checked = d.relevador === 'ON';
   });
   db.ref('vestaguard/sistema/ultima_foto').on('value', s => {
     const val = s.val();
     if (val && val.imagen_b64) {
       document.getElementById('visor-camara').src = "data:image/jpeg;base64," + val.imagen_b64;
-      if (val.timestamp) {
-        const d = new Date(val.timestamp);
-        document.getElementById('cam-timestamp').innerText = d.toLocaleTimeString();
-      }
+      if (val.timestamp) document.getElementById('cam-timestamp').innerText = new Date(val.timestamp).toLocaleTimeString();
     }
   });
 }
 
-/* ── Init ── */
-window.addEventListener('load', () => {
-  setEstado(false, false);
-  document.getElementById('metric-conectividad').textContent = 'OFFLINE';
-  document.getElementById('metric-sistema').textContent = 'OFFLINE';
-  document.getElementById('metric-update').textContent = 'Sin conexión';
-});
+window.addEventListener('load', () => setEstado(false, false));
 </script>
 </body>
 </html>
