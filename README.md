@@ -20,7 +20,7 @@ El repositorio está organizado profesionalmente siguiendo el patrón de diseño
 
 Se requiere clonar el repositorio y, posteriormente, instalar las dependencias necesarias para los módulos de Inteligencia Artificial y computación en la nube ejecutando:
 
-\\ash
+\\Bash
 pip install -r requirements.txt
 pip install -r Servidor/requirements_firebase.txt
 pip install -r Servidor/requirements_ia.txt
