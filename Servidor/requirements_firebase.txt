@@ -1,0 +1,9 @@
+# Dependencias Python para VestaGuard — Firebase Logger (E4)
+# Instalar con: pip install -r requirements_firebase.txt
+#
+# Nota: se usa 'requests' (Python estandar) en lugar de firebase-admin,
+# porque la maestra usa REST API directa (equivalente a urequests en MicroPython).
+# Referencia: Sist Progr Unidad4 Firebase.txt — seccion "REST API con urequests"
+
+requests>=2.28.0
+paho-mqtt>=1.6.1
