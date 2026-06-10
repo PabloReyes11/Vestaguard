@@ -8,7 +8,7 @@ El repositorio está organizado profesionalmente siguiendo un patrón de separac
 
 - **`HAL/` (Hardware Abstraction Layer):** Contiene el firmware en MicroPython para los microcontroladores. Aquí se encuentra la lógica de la Máquina de Estados (FSM) del ESP32 NodeMCU, los controladores asíncronos para los sensores/actuadores físicos, y el script de captura JPEG para la ESP32-CAM.
 - **`Servidor/` (Backend e IA):** Contiene el código Python que se ejecuta en la PC local. Aloja el servidor de Inteligencia Artificial (OpenCV DNN Caffe SSD) para procesar las imágenes entrantes, el puente bidireccional de MQTT a Google Firebase (`firebase_vestaguard.py`), y la configuración del broker Mosquitto local.
-- **`Interfaz/` (Frontend):** Contiene la lógica del lado del cliente (`dashboard.html`), la cual emplea WebSockets nativos de Firebase JS SDK para ofrecer un panel de control reactivo sin latencia (*zero polling*).
+- **`docs/` (Frontend):** Contiene la lógica del lado del cliente (`index.html`), la cual emplea WebSockets nativos de Firebase JS SDK para ofrecer un panel de control reactivo sin latencia (*zero polling*).
 
 ## Requisitos Previos
 
@@ -46,7 +46,7 @@ Sigue estos pasos en orden para levantar el entorno completo:
    python Servidor/firebase_vestaguard.py
    ```
 4. **Hardware (ESP32):** Conecta las baterías a la PowerBank del chaleco para que la Máquina de Estados comience a publicar telemetría.
-5. **Dashboard Local:** Abre el archivo `Interfaz/dashboard.html` en cualquier navegador web.
+5. **Dashboard Local:** Abre el archivo `docs/index.html` en cualquier navegador web.
 
 ## 3. Acceso Remoto al Dashboard
 
